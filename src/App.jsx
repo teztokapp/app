@@ -176,7 +176,6 @@ const trimBackgroundImagesCache = (items) => {
 const buildOfflineScope = ({
   backend,
   customApiBaseUrl,
-  backgroundApiBaseUrl,
   contentLang,
   year,
 }) =>
@@ -184,7 +183,6 @@ const buildOfflineScope = ({
     OFFLINE_CACHE_VERSION,
     backend || "unknown",
     String(customApiBaseUrl ?? "").trim(),
-    String(backgroundApiBaseUrl ?? "").trim(),
     contentLang || "all",
     year || "0",
   ].join("|");
@@ -194,9 +192,6 @@ const getFeedCacheKey = (scope, feedId) => `teztok-cache:feed:${scope}:${feedId}
 const getBackgroundImagesCacheKey = (scope) => `teztok-cache:backgrounds:${scope}`;
 const DEFAULT_YOKTEZ_SERVER_URL = String(
   import.meta.env.VITE_YOKTEZ_API_BASE_URL ?? "https://yoktez-server.vercel.app/",
-).trim();
-const DEFAULT_BACKGROUND_SERVER_URL = String(
-  import.meta.env.VITE_BACKGROUND_API_BASE_URL ?? "",
 ).trim();
 
 const getInstallPlatform = () => {
@@ -524,8 +519,6 @@ function SettingsScreen({
   backendMeta,
   yoktezServerUrl,
   onYoktezServerUrlChange,
-  backgroundServerUrl,
-  onBackgroundServerUrlChange,
   defaultDisciplineLabel,
   onOpenDefaultDisciplinePicker,
   hapticsMode,
@@ -599,21 +592,6 @@ function SettingsScreen({
             </span>
           </div>
         ) : null}
-        {backendMeta.supportsBackgroundImages ? (
-          <div className="info-row">
-            <p>{t("settings.backgroundServerUrl")}</p>
-            <input
-              className="settings-input"
-              type="url"
-              inputMode="url"
-              placeholder={t("settings.urlPlaceholder")}
-              value={backgroundServerUrl}
-              onChange={(event) => onBackgroundServerUrlChange(event.target.value)}
-            />
-            <span>{t("settings.backgroundServerHelp")}</span>
-          </div>
-        ) : null}
-
         <SettingsSelectRow
           label={t("settings.defaultFilter")}
           value={defaultDisciplineLabel}
@@ -1242,9 +1220,6 @@ export default function App() {
   const [yoktezServerUrl, setYoktezServerUrl] = useState(
     () => window.localStorage.getItem("teztok-yoktez-server-url") ?? DEFAULT_YOKTEZ_SERVER_URL,
   );
-  const [backgroundServerUrl, setBackgroundServerUrl] = useState(
-    () => window.localStorage.getItem("teztok-background-server-url") ?? DEFAULT_BACKGROUND_SERVER_URL,
-  );
   const [feed, setFeed] = useState([]);
   const [cursor, setCursor] = useState(0);
   const [activeTab, setActiveTab] = useState("feed");
@@ -1321,7 +1296,6 @@ export default function App() {
   const apiConfig = {
     backend,
     customApiBaseUrl: yoktezServerUrl,
-    backgroundApiBaseUrl: backgroundServerUrl,
     locale,
     contentLang,
     year: year === "all" ? null : year,
@@ -1354,10 +1328,6 @@ export default function App() {
   useEffect(() => {
     writePreferenceValue("teztok-yoktez-server-url", yoktezServerUrl);
   }, [yoktezServerUrl]);
-
-  useEffect(() => {
-    writePreferenceValue("teztok-background-server-url", backgroundServerUrl);
-  }, [backgroundServerUrl]);
 
   useEffect(() => {
     writePreferenceValue("teztok-theme", theme);
@@ -1595,7 +1565,6 @@ export default function App() {
   }, [
     backend,
     yoktezServerUrl,
-    backgroundServerUrl,
     offlineScope,
     defaultDisciplineId,
     backendMeta.allFilterLabel,
@@ -1632,7 +1601,6 @@ export default function App() {
     activeDisciplineId,
     backend,
     yoktezServerUrl,
-    backgroundServerUrl,
     feedMode,
     year,
     contentLang,
@@ -1680,7 +1648,6 @@ export default function App() {
     canLoadBackgroundImages,
     backend,
     yoktezServerUrl,
-    backgroundServerUrl,
   ]);
 
   async function loadFeed(nextCursor, replace = false) {
@@ -2153,8 +2120,6 @@ export default function App() {
             backendMeta={backendMeta}
             yoktezServerUrl={yoktezServerUrl}
             onYoktezServerUrlChange={setYoktezServerUrl}
-            backgroundServerUrl={backgroundServerUrl}
-            onBackgroundServerUrlChange={setBackgroundServerUrl}
             defaultDisciplineLabel={
               defaultDisciplineOption?.label ?? backendMeta.allFilterLabel
             }

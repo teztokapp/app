@@ -1,6 +1,6 @@
 # TezTok
 
-Mobile-first academic thesis browsing with a TikTok-style vertical feed. The project combines a React frontend, a dedicated YOKTez API, and a separate background-image service.
+Mobile-first academic thesis browsing with a TikTok-style vertical feed. The project combines a React frontend and a dedicated YOKTez API, while background images are fetched directly in the client from Wikimedia Commons with an optional Unsplash fallback.
 
 ## Architecture
 
@@ -39,13 +39,6 @@ Mobile-first academic thesis browsing with a TikTok-style vertical feed. The pro
 | Playwright scraper / MCP  |
 +---------------------------+
 
-+---------------------------+
-| Background image service  |
-|                           |
-| - /background-image       |
-| - Wikimedia cache         |
-| - Unsplash fallback       |
-+---------------------------+
 ```
 
 ## Features
@@ -73,10 +66,7 @@ npm run dev
 
 Frontend runs on `http://localhost:5173`.
 
-Local development uses two backend services:
-
-1. `http://localhost:3001` for YOKTez feed, search, thesis detail, and summary APIs.
-2. `http://localhost:3002` for Wikimedia/Unsplash background image caching.
+Local development uses `http://localhost:3001` for YOKTez feed, search, thesis detail, and summary APIs.
 
 ## Standalone deploy
 
@@ -84,10 +74,10 @@ The frontend can talk to separately hosted services with:
 
 ```bash
 VITE_YOKTEZ_API_BASE_URL=https://your-yoktez-api.example.com
-VITE_BACKGROUND_API_BASE_URL=https://your-backgrounds.example.com
+VITE_UNSPLASH_ACCESS_KEY=your_unsplash_access_key
 ```
 
-Without those env vars, local development uses the Vite `/api` and `/media-api` proxies.
+Without `VITE_YOKTEZ_API_BASE_URL`, local development uses the Vite `/api` proxy. `VITE_UNSPLASH_ACCESS_KEY` is optional and only enables the client-side Unsplash fallback.
 
 ## Notes
 
