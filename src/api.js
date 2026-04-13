@@ -113,18 +113,6 @@ export function getBackendMetadata(backend, locale = DEFAULT_LOCALE) {
     return getClientProviderMetadata(BACKEND_CROSSREF, t("providers.names.crossref"), locale);
   }
 
-  if (backend === BACKEND_SEMANTIC_SCHOLAR) {
-    return getClientProviderMetadata(
-      BACKEND_SEMANTIC_SCHOLAR,
-      t("providers.names.semanticScholar"),
-      locale,
-    );
-  }
-
-  if (backend === BACKEND_CORE) {
-    return getClientProviderMetadata(BACKEND_CORE, t("providers.names.core"), locale);
-  }
-
   return getClientProviderMetadata(BACKEND_OPENALEX, t("providers.names.openalex"), locale);
 }
 
@@ -486,7 +474,7 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   url.searchParams.set("order", "desc");
 
   if (filter.query) {
-    url.searchParams.set("query.bibliographic", filter.query);
+    url.searchParams.set("query", filter.query);
   }
 
   const filters = [];
