@@ -1,156 +1,123 @@
-# TezTok
+# TezTok  
+**A mobile-first interface for academic research discovery**
 
-Mobile-first academic thesis browsing with a TikTok-style vertical feed. The project is intentionally lightweight: a React frontend, a small Express API, and adapter points for a Playwright-based YOKTez scraper.
+TezTok is an experimental application that rethinks how academic content is discovered. Instead of relying on traditional search-based interfaces, it presents theses and papers through a vertical, swipe-based feed inspired by short-form interaction patterns.
 
-## Architecture
+The goal is to lower the cognitive barrier to engaging with academic research, particularly outside a user’s primary field.
 
-```text
-+---------------------------+       +---------------------------+
-| React / Vite frontend     |       | Optional OpenAI summary   |
-|                           |       | generation                |
-| - snap-scrolling feed     |       +-------------+-------------+
-| - search + bookmarks      |                     |
-| - abstract expansion      |                     |
-+-------------+-------------+                     |
-              | /api                               |
-              v                                    |
-+-------------+-------------+                      |
-| Express API gateway       |<---------------------+
-|                           |
-| - /feed                   |
-| - /random-thesis          |
-| - /search                 |
-| - /thesis/:id             |
-| - /thesis/:id/summary     |
-+-------------+-------------+
-              |
-              v
-+-------------+-------------+
-| YOKTez adapter layer       |
-|                            |
-| - cache in memory / Redis  |
-| - maps scraper output      |
-| - calls Playwright server  |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-| YOKTez website via        |
-| Playwright scraper / MCP  |
-+---------------------------+
+---
+
+## Motivation
+
+Access to academic content is a problem, so is discovery.
+
+Most platforms (e.g., Google Scholar, PubMed, JSTOR) are optimized for targeted search, requiring users to know what they are looking for in advance. This limits exposure to unfamiliar topics and reduces opportunities for cross-disciplinary exploration.
+
+TezTok explores an alternative approach:
+
+> Can familiar, low-friction interaction patterns (such as vertical scrolling and progressive disclosure) increase engagement with academic content?
+
+---
+
+## Features
+
+- **Vertical Swipe Feed**  
+  Browse academic papers and theses one at a time using a full-screen, snap-scrolling interface.
+
+- **Multi-Source Aggregation**  
+  Integrates multiple open-access academic APIs into a unified feed:
+  - OpenAlex  
+  - Crossref  
+  - YÖKTez (via scraper backend)
+  - ...more to come.
+
+- **Topic Filtering**  
+  Browse content by discipline (e.g., Engineering, Social Sciences, Medicine).
+
+- **Save & Revisit**  
+  Save papers to a local “Likes” library for later access.
+
+- **PWA Support**  
+  Installable on any device with offline access to previously loaded content.
+
+---
+
+### Data Flow
+1. Frontend requests papers from selected source  
+2. Backend proxies or fetches data (handles CORS and scraping)  
+3. Results normalized into a unified format  
+4. Feed renders items with lazy loading
+
+---
+
+## API Sources
+
+TezTok relies on open-access academic APIs:
+
+- OpenAlex  
+- Crossref  
+- YÖKTez (requires self-hosted scraper server)
+
+### Notes
+- YÖKTez requires a self-hosted scraping server  
+
+---
+
+## Getting Started
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/lexicalnerd/teztok.git
+cd teztok
 ```
 
-## API design
-
-### `GET /api/random-thesis`
-
-Returns one thesis object for the cold-start experience.
-
-### `GET /api/feed?cursor=0&limit=4`
-
-Returns a paginated feed:
-
-```json
-{
-  "items": [{ "id": "tez-001", "title": "..." }],
-  "nextCursor": 4
-}
-```
-
-### `GET /api/search?q=kuraklik`
-
-Returns search results shaped for the same feed card UI:
-
-```json
-{
-  "query": "kuraklik",
-  "count": 1,
-  "items": [{ "id": "tez-003", "title": "..." }]
-}
-```
-
-### `GET /api/thesis/:id`
-
-Returns a normalized thesis detail record.
-
-### `POST /api/thesis/:id/summary`
-
-Generates a short mobile-friendly AI summary. Falls back to a local heuristic if no `OPENAI_API_KEY` is configured.
-
-## Frontend component structure
-
-```text
-App
-|- FloatingHeader
-|  |- SearchForm
-|- Feed
-|  |- SnapScreen[]
-|     |- ThesisCard
-|        |- AbstractPanel
-|        |- KeywordChips
-|        |- SummaryPanel
-|        |- ActionBar
-```
-
-## Caching strategy
-
-1. Cache normalized thesis records by thesis id to avoid repeat scraping.
-2. Cache feed pages and search results for 10 to 30 minutes.
-3. Persist hot queries in Redis if traffic grows or the scraper runs remotely.
-4. Pre-warm `random-thesis` and common search terms with a cron job.
-5. Save AI summaries separately because they are deterministic enough to reuse.
-
-## Legal and ethical notes
-
-1. Review YOKTez terms of service, robots directives, and PDF access restrictions before scraping.
-2. Rate-limit scraper traffic aggressively and identify your service honestly if possible.
-3. Avoid exposing private or restricted theses; only surface metadata or documents that YOKTez already permits publicly.
-4. Make AI summaries clearly labeled as machine-generated and keep links to the original thesis.
-5. Provide a takedown or contact path in case content owners object to reuse.
-
-## Step-by-step implementation plan
-
-1. Replace the stub in `server/yoktezClient.js` with real calls to your Playwright scraper service.
-2. Normalize scraper output into the shared thesis shape used by the frontend.
-3. Add Redis or SQLite caching once real scrape latency is known.
-4. Swap sample data for live feed generation and add better cursoring.
-5. Add authentication only if you later want synced bookmarks.
-
-## Run locally
-
+### 2. Install dependencies
 ```bash
 npm install
+```
+
+### 3. Configure environment
+Create a `.env` file:
+
+```env
+YOKTEZ_SERVER_URL=http://localhost:XXXX
+```
+
+### 4. Run backend and frontend
+```bash
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173` and proxies API calls to the Express server on `http://localhost:3001`.
+---
 
-## Standalone Frontend Deploy
+## Limitations
 
-The frontend can now talk to any hosted TezTok API by setting:
+- Dependent on third-party APIs and rate limits  
+- Scraping-based sources (YÖKTez) may be unstable  
+- No personalization or recommendation system (soon:tm:?)  
+- Evaluation is preliminary and limited in scope  
 
-```bash
-VITE_API_BASE_URL=https://your-api.example.com
-```
+---
 
-Without that env var, local development still uses the Vite `/api` proxy.
+## Future Work
 
-Note: the live YOKTez scraping flow still belongs on a server or worker. The client app can be deployed independently, but the YOKTez session/cookie scraping layer should stay in a hosted backend.
+- Recommendation system based on user interaction  
+- Improved summarization (LLM-assisted)  
+- Larger-scale user study  
+- Cross-device sync for saved items  
+- Better semantic filtering and clustering  
 
-## PWA / offline behavior
+---
 
-The web app now builds as a PWA.
+## Disclaimer
 
-1. The app shell and static assets are precached during the production build.
-2. Feed requests are runtime-cached, so previously opened screens can load again when you reopen the app without the local server running.
-3. Client-only providers such as Crossref, OpenAlex, Semantic Scholar, CORE, and direct arXiv can benefit from cached responses after they have been fetched once.
-4. YÖK Tez still needs a reachable server for new uncached data, because that provider depends on a backend scraper/API.
+- Content is sourced from publicly available academic APIs  
+- Always verify information using the original paper  
 
-To test it locally:
+---
 
-```bash
-npm run build
-npm run start
-```
+## Feedback
 
-Open the app once, let a few feed pages load, then stop the server or go offline and reopen the installed app to verify cached content still appears.
+This is an experimental project exploring interaction design in academic contexts.
+
+Feedback, critiques, and ideas are welcome, send an issue through GitHub.
