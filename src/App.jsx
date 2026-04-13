@@ -366,6 +366,7 @@ function SettingsScreen({
   themeOptions,
   hapticsOptions,
   backgroundImageOptions,
+  contentLangOptions,
   feedModeOptions,
   theme,
   locale,
@@ -1694,6 +1695,7 @@ export default function App() {
             feedModeOptions={feedModeOptions}
             hapticsOptions={hapticsOptions}
             backgroundImageOptions={backgroundImageOptions}
+            contentLangOptions={contentLangOptions}
             backend={backend}
             backendMeta={backendMeta}
             semanticScholarApiKey={semanticScholarApiKey}
