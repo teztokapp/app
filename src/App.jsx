@@ -20,6 +20,9 @@ import {
   sanitizeBackendSelection,
 } from "./api.js";
 import { createTranslator, DEFAULT_LOCALE, LOCALE_OPTIONS } from "./i18n.js";
+import packageMeta from "../package.json";
+
+const APP_VERSION = packageMeta.version;
 
 function HeartIcon({ filled }) {
   return (
@@ -422,6 +425,58 @@ function SettingsSelectRow({
   );
 }
 
+function AboutSheet({ open, onClose, t }) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="sheet-backdrop" onClick={onClose} aria-hidden="true">
+      <section
+        className="abstract-sheet about-sheet"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("settings.aboutTitle")}
+      >
+        <div className="sheet-handle" />
+        <div className="sheet-header">
+          <p>{t("settings.aboutBadge")}</p>
+          <button type="button" className="sheet-close" onClick={onClose}>
+            {t("picker.done")}
+          </button>
+        </div>
+        <div className="about-sheet-intro">
+          <img className="about-sheet-icon" src="/icon.png" alt="" aria-hidden="true" />
+          <div>
+            <h3>{t("settings.aboutAppName")}</h3>
+            <p className="about-sheet-version">
+              {t("settings.aboutVersion", { version: APP_VERSION })}
+            </p>
+          </div>
+        </div>
+        <div className="sheet-body about-sheet-body">
+          <p>{t("settings.aboutBody")}</p>
+          <div className="about-sheet-meta">
+            <div className="about-meta-row">
+              <span>{t("settings.aboutSourceLabel")}</span>
+              <strong>{t("settings.aboutSourceValue")}</strong>
+            </div>
+            <div className="about-meta-row">
+              <span>{t("settings.aboutExperienceLabel")}</span>
+              <strong>{t("settings.aboutExperienceValue")}</strong>
+            </div>
+            <div className="about-meta-row">
+              <span>{t("settings.aboutInstallLabel")}</span>
+              <strong>{t("settings.aboutInstallValue")}</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function InstallSettingsRow({ t, installPlatform, onInstallApp }) {
   const value =
     installPlatform === "android"
@@ -531,6 +586,7 @@ function SettingsScreen({
   showInstallPrompt,
   installPlatform,
   onInstallApp,
+  onOpenAbout,
 }) {
   const themeLabel =
     themeOptions.find((option) => option.id === theme)?.label ?? theme;
@@ -625,6 +681,12 @@ function SettingsScreen({
           label={t("settings.contentLanguage")}
           value={contentLangLabel}
           onOpen={() => onOpenSettingsPicker("contentLang")}
+        />
+        <SettingsSelectRow
+          label={t("settings.aboutTitle")}
+          value={t("settings.aboutAction")}
+          helper={t("settings.aboutSummary")}
+          onOpen={onOpenAbout}
         />
       </div>
     </section>
@@ -1286,6 +1348,7 @@ export default function App() {
   const [backgroundImages, setBackgroundImages] = useState({});
   const [pendingOpenThesisId, setPendingOpenThesisId] = useState(null);
   const [settingsPicker, setSettingsPicker] = useState(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const observerRef = useRef(null);
   const tapTrackerRef = useRef({ id: null, time: 0, x: 0, y: 0 });
   const feedRef = useRef(null);
@@ -2137,6 +2200,10 @@ export default function App() {
               fireSelectionHaptic();
               setSettingsPicker(pickerId);
             }}
+            onOpenAbout={() => {
+              fireSelectionHaptic();
+              setAboutOpen(true);
+            }}
           />
         </div>
       ) : activeTab === "likes" ? (
@@ -2327,6 +2394,11 @@ export default function App() {
           settingsPickerConfig?.onSelect(value);
         }}
         onSelectHaptic={fireSelectionHaptic}
+      />
+      <AboutSheet
+        t={t}
+        open={aboutOpen}
+        onClose={() => setAboutOpen(false)}
       />
     </div>
   );

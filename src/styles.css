@@ -1504,3 +1504,60 @@ select {
     color: color-mix(in srgb, var(--paper) 88%, transparent);
     line-height: 1.65;
 }
+
+.about-sheet {
+    width: min(100%, 32rem);
+}
+
+.about-sheet-intro {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.9rem;
+}
+
+.about-sheet-icon {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 1.15rem;
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 12px 24px color-mix(in srgb, var(--paper) 10%, transparent);
+    object-fit: cover;
+}
+
+.about-sheet-version {
+    margin: 0.35rem 0 0;
+    color: var(--muted);
+}
+
+.about-sheet-body {
+    display: grid;
+    gap: 1rem;
+}
+
+.about-sheet-meta {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--chip-bg) 80%, transparent);
+}
+
+.about-meta-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.about-meta-row span,
+.about-meta-row strong {
+    line-height: 1.4;
+}
+
+.about-meta-row strong {
+    max-width: 60%;
+    color: var(--paper);
+    text-align: right;
+}

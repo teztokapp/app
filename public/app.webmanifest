@@ -1,0 +1,52 @@
+{
+  "name": "TezTok",
+  "short_name": "TezTok",
+  "description": "A mobile-first thesis browser inspired by TikTok, powered by YOKTez.",
+  "lang": "en",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "protocol_handlers": [
+    {
+      "protocol": "web+teztok",
+      "url": "/?open=%s"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/install-wide.png",
+      "sizes": "2880x1464",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "TezTok desktop install preview"
+    },
+    {
+      "src": "/screenshots/install-mobile.png",
+      "sizes": "1082x2402",
+      "type": "image/png",
+      "label": "TezTok mobile install preview"
+    }
+  ]
+}

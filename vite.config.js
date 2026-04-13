@@ -10,16 +10,27 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      devOptions: {
+        enabled: true,
+      },
       includeAssets: ["icon-192.png", "icon-512.png", "apple-touch-icon.png"],
       manifest: {
         name: "TezTok",
         short_name: "TezTok",
         description: "A mobile-first thesis browser inspired by TikTok, powered by YOKTez.",
+        id: "/",
         theme_color: "#0b1020",
         background_color: "#0b1020",
         display: "standalone",
+        display_override: ["window-controls-overlay", "standalone"],
         start_url: "/",
         scope: "/",
+        protocol_handlers: [
+          {
+            protocol: "web+teztok",
+            url: "/?open=%s",
+          },
+        ],
         icons: [
           {
             src: "/icon-192.png",
@@ -36,6 +47,21 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
+          },
+        ],
+        screenshots: [
+          {
+            src: "/screenshots/install-wide.png",
+            sizes: "2880x1464",
+            type: "image/png",
+            form_factor: "wide",
+            label: "TezTok desktop install preview",
+          },
+          {
+            src: "/screenshots/install-mobile.png",
+            sizes: "1082x2402",
+            type: "image/png",
+            label: "TezTok mobile install preview",
           },
         ],
       },
