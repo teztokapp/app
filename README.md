@@ -1,123 +1,96 @@
-# TezTok  
-**A mobile-first interface for academic research discovery**
+# TezTok
 
-TezTok is an experimental application that rethinks how academic content is discovered. Instead of relying on traditional search-based interfaces, it presents theses and papers through a vertical, swipe-based feed inspired by short-form interaction patterns.
+Mobile-first academic thesis browsing with a TikTok-style vertical feed. The project combines a React frontend, a dedicated YOKTez API, and a separate background-image service.
 
-The goal is to lower the cognitive barrier to engaging with academic research, particularly outside a user’s primary field.
+## Architecture
 
----
+```text
++---------------------------+       +---------------------------+
+| React / Vite frontend     |       | Optional OpenAI summary   |
+|                           |       | generation                |
+| - snap-scrolling feed     |       +-------------+-------------+
+| - search + bookmarks      |                     |
+| - abstract expansion      |                     |
++-------------+-------------+                     |
+              | /api                               |
+              v                                    |
++-------------+-------------+                      |
+| YOKTez API gateway        |<---------------------+
+|                           |
+| - /feed                   |
+| - /random-thesis          |
+| - /search                 |
+| - /thesis/:id             |
+| - /thesis/:id/summary     |
++-------------+-------------+
+              |
+              v
++-------------+-------------+
+| YOKTez adapter layer      |
+|                           |
+| - cache in memory / Redis |
+| - maps scraper output     |
+| - calls Playwright server |
++-------------+-------------+
+              |
+              v
++---------------------------+
+| YOKTez website via        |
+| Playwright scraper / MCP  |
++---------------------------+
 
-## Motivation
-
-Access to academic content is a problem, so is discovery.
-
-Most platforms (e.g., Google Scholar, PubMed, JSTOR) are optimized for targeted search, requiring users to know what they are looking for in advance. This limits exposure to unfamiliar topics and reduces opportunities for cross-disciplinary exploration.
-
-TezTok explores an alternative approach:
-
-> Can familiar, low-friction interaction patterns (such as vertical scrolling and progressive disclosure) increase engagement with academic content?
-
----
++---------------------------+
+| Background image service  |
+|                           |
+| - /background-image       |
+| - Wikimedia cache         |
+| - Unsplash fallback       |
++---------------------------+
+```
 
 ## Features
 
-- **Vertical Swipe Feed**  
-  Browse academic papers and theses one at a time using a full-screen, snap-scrolling interface.
+- Vertical swipe-style thesis feed
+- Multi-source support including OpenAlex, Crossref, and YOKTez
+- Discipline/topic filtering
+- Local likes/bookmarks
+- PWA install and offline caching
 
-- **Multi-Source Aggregation**  
-  Integrates multiple open-access academic APIs into a unified feed:
-  - OpenAlex  
-  - Crossref  
-  - YÖKTez (via scraper backend)
-  - ...more to come.
+## API design
 
-- **Topic Filtering**  
-  Browse content by discipline (e.g., Engineering, Social Sciences, Medicine).
+- `GET /api/random-thesis`
+- `GET /api/feed?cursor=0&limit=4`
+- `GET /api/search?q=kuraklik`
+- `GET /api/thesis/:id`
+- `POST /api/thesis/:id/summary`
 
-- **Save & Revisit**  
-  Save papers to a local “Likes” library for later access.
+## Run locally
 
-- **PWA Support**  
-  Installable on any device with offline access to previously loaded content.
-
----
-
-### Data Flow
-1. Frontend requests papers from selected source  
-2. Backend proxies or fetches data (handles CORS and scraping)  
-3. Results normalized into a unified format  
-4. Feed renders items with lazy loading
-
----
-
-## API Sources
-
-TezTok relies on open-access academic APIs:
-
-- OpenAlex  
-- Crossref  
-- YÖKTez (requires self-hosted scraper server)
-
-### Notes
-- YÖKTez requires a self-hosted scraping server  
-
----
-
-## Getting Started
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/lexicalnerd/teztok.git
-cd teztok
-```
-
-### 2. Install dependencies
 ```bash
 npm install
-```
-
-### 3. Configure environment
-Create a `.env` file:
-
-```env
-YOKTEZ_SERVER_URL=http://localhost:XXXX
-```
-
-### 4. Run backend and frontend
-```bash
 npm run dev
 ```
 
----
+Frontend runs on `http://localhost:5173`.
 
-## Limitations
+Local development uses two backend services:
 
-- Dependent on third-party APIs and rate limits  
-- Scraping-based sources (YÖKTez) may be unstable  
-- No personalization or recommendation system (soon:tm:?)  
-- Evaluation is preliminary and limited in scope  
+1. `http://localhost:3001` for YOKTez feed, search, thesis detail, and summary APIs.
+2. `http://localhost:3002` for Wikimedia/Unsplash background image caching.
 
----
+## Standalone deploy
 
-## Future Work
+The frontend can talk to separately hosted services with:
 
-- Recommendation system based on user interaction  
-- Improved summarization (LLM-assisted)  
-- Larger-scale user study  
-- Cross-device sync for saved items  
-- Better semantic filtering and clustering  
+```bash
+VITE_YOKTEZ_API_BASE_URL=https://your-yoktez-api.example.com
+VITE_BACKGROUND_API_BASE_URL=https://your-backgrounds.example.com
+```
 
----
+Without those env vars, local development uses the Vite `/api` and `/media-api` proxies.
 
-## Disclaimer
+## Notes
 
-- Content is sourced from publicly available academic APIs  
-- Always verify information using the original paper  
-
----
-
-## Feedback
-
-This is an experimental project exploring interaction design in academic contexts.
-
-Feedback, critiques, and ideas are welcome, send an issue through GitHub.
+- YOKTez scraping should stay on a hosted backend or worker.
+- AI summaries fall back to a local heuristic when `OPENAI_API_KEY` is missing.
+- Previously opened content can still load from cache in the PWA.

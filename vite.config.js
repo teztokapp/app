@@ -75,7 +75,9 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/api/"),
+            urlPattern: ({ url }) =>
+              url.origin === self.location.origin &&
+              (url.pathname.startsWith("/api/") || url.pathname.startsWith("/media-api/")),
             handler: "NetworkFirst",
             options: {
               cacheName: "server-api",
@@ -113,7 +115,8 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5173,
     proxy: {
-      "/api": "http://localhost:3001"
+      "/api": "http://localhost:3001",
+      "/media-api": "http://localhost:3002"
     }
   },
   build: {

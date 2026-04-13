@@ -128,6 +128,9 @@ const translations = {
       apiKeyPlaceholder: "API key",
       yoktezServerUrl: "YÖK Tez sunucu URL",
       yoktezServerHelp: "API çağrıları bu adrese yönlendirilir.",
+      backgroundServerUrl: "Arka plan sunucu URL",
+      backgroundServerHelp:
+        "Wikimedia ve görsel önbellek istekleri bu adrese yönlendirilir. Yerelde boş bırakırsan `/media-api` proxy'si kullanılır.",
       semanticScholarApiKey: "Semantic Scholar API key",
       semanticScholarApiKeyHelp:
         "İstersen boş bırakabilirsin ama rate limit daha sert olabilir.",
@@ -340,6 +343,9 @@ const translations = {
       yoktezServerUrl: "YÖK Tez server URL",
       yoktezServerHelp:
         "API calls will be sent to this address. Example: `https://example.com`",
+      backgroundServerUrl: "Background image server URL",
+      backgroundServerHelp:
+        "Wikimedia and image-cache requests will be sent here. Leave it empty in local development to use the built-in `/media-api` proxy.",
       semanticScholarApiKey: "Semantic Scholar API key",
       semanticScholarApiKeyHelp:
         "You can leave this empty, but rate limits may be stricter.",

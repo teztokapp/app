@@ -275,18 +275,22 @@ function buildUrl(path, params, config) {
   return baseUrl ? url.toString() : `${url.pathname}${url.search}`;
 }
 
-async function requestJson(path, params, config) {
-  if (config?.backend === BACKEND_YOKTEZ && !resolveBaseUrl(config)) {
-    throw new Error("YÖK Tez server URL is required.");
-  }
-
-  const response = await fetch(buildUrl(path, params, config));
+async function fetchJson(url) {
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status}`);
   }
 
   return response.json();
+}
+
+async function requestJson(path, params, config) {
+  if (config?.backend === BACKEND_YOKTEZ && !resolveBaseUrl(config)) {
+    throw new Error("YÖK Tez server URL is required.");
+  }
+
+  return fetchJson(buildUrl(path, params, config));
 }
 
 async function requestJsonFromBaseUrl(baseUrl, path, params) {
@@ -303,13 +307,7 @@ async function requestJsonFromBaseUrl(baseUrl, path, params) {
     });
   }
 
-  const response = await fetch(url.toString());
-
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
-
-  return response.json();
+  return fetchJson(url.toString());
 }
 
 function getOpenAlexFilterById(filterId = "all") {
@@ -1165,10 +1163,17 @@ export function fetchDisciplineFeed(discipline, config) {
 }
 
 export function fetchBackgroundImage({ title, keywords }, config) {
-  return requestJson("/api/background-image", {
+  const params = {
     title,
     keywords: keywords.join(","),
-  }, config);
+  };
+  const backgroundApiBaseUrl = normalizeBaseUrl(config?.backgroundApiBaseUrl);
+
+  if (backgroundApiBaseUrl) {
+    return requestJsonFromBaseUrl(backgroundApiBaseUrl, "/background-image", params);
+  }
+
+  return fetchJson(buildUrl("/media-api/background-image", params));
 }
 
 export function searchArticles(criteria, config) {
