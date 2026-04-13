@@ -9,7 +9,6 @@ const translations = {
   tr: {
     providers: {
       names: {
-        arxiv: "arXiv",
         openalex: "OpenAlex",
         crossref: "Crossref",
         semanticScholar: "Semantic Scholar",
@@ -38,11 +37,6 @@ const translations = {
         filterEmptyMessage: "Bu aramayla eşleşen {label} konusu yok.",
         all: "Tüm konular",
         feedErrorHint: "{label} verisi alınamadı.",
-      },
-      arxiv: {
-        all: "Tüm konular",
-        feedErrorHint:
-          "Tarayıcı CORS kısıtı varsa arXiv için ayrı bir proxy gerekebilir.",
       },
       openalex: {
         all: "Tüm konular",
@@ -124,9 +118,6 @@ const translations = {
       apiKeyPlaceholder: "API key",
       yoktezServerUrl: "YÖK Tez sunucu URL",
       yoktezServerHelp: "API çağrıları bu adrese yönlendirilir.",
-      arxivServerUrl: "arXiv sunucu URL",
-      arxivServerHelp:
-        "Boş bırakırsan doğrudan arXiv kullanılır. Girersen istekler bu adrese `/api/arxiv-feed` ve `/api/arxiv-topics` olarak gider.",
       semanticScholarApiKey: "Semantic Scholar API key",
       semanticScholarApiKeyHelp:
         "İstersen boş bırakabilirsin ama rate limit daha sert olabilir.",
@@ -179,7 +170,6 @@ const translations = {
   en: {
     providers: {
       names: {
-        arxiv: "arXiv",
         openalex: "OpenAlex",
         crossref: "Crossref",
         semanticScholar: "Semantic Scholar",
@@ -208,11 +198,6 @@ const translations = {
         filterEmptyMessage: "No {label} topic matches this search.",
         all: "All topics",
         feedErrorHint: "{label} data could not be loaded.",
-      },
-      arxiv: {
-        all: "All topics",
-        feedErrorHint:
-          "If browser CORS blocks arXiv, you may need a separate proxy.",
       },
       openalex: {
         all: "All topics",
@@ -295,9 +280,6 @@ const translations = {
       yoktezServerUrl: "YÖK Tez server URL",
       yoktezServerHelp:
         "API calls will be sent to this address. Example: `https://example.com`",
-      arxivServerUrl: "arXiv server URL",
-      arxivServerHelp:
-        "Leave empty to use arXiv directly. If set, requests go to this base as `/api/arxiv-feed` and `/api/arxiv-topics`.",
       semanticScholarApiKey: "Semantic Scholar API key",
       semanticScholarApiKeyHelp:
         "You can leave this empty, but rate limits may be stricter.",

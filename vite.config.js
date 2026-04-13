@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 const apiCachePattern =
-  /^https:\/\/(api\.openalex\.org|api\.crossref\.org|api\.semanticscholar\.org|api\.core\.ac\.uk|export\.arxiv\.org)\//;
+  /^https:\/\/(api\.openalex\.org|api\.crossref\.org|api\.semanticscholar\.org|api\.core\.ac\.uk)\//;
 
 export default defineConfig({
   plugins: [

@@ -1,18 +1,16 @@
 import { createTranslator, DEFAULT_LOCALE } from "./i18n.js";
 
-export const BACKEND_ARXIV = "arxiv";
 export const BACKEND_OPENALEX = "openalex";
 export const BACKEND_CROSSREF = "crossref";
 export const BACKEND_SEMANTIC_SCHOLAR = "semantic-scholar";
 export const BACKEND_CORE = "core";
 export const BACKEND_YOKTEZ = "yoktez";
-export const DEFAULT_BACKEND = BACKEND_OPENALEX;
+export const DEFAULT_BACKEND = BACKEND_YOKTEZ;
 
 export const BACKEND_OPTIONS = [
   { id: BACKEND_OPENALEX, label: "OpenAlex" },
   { id: BACKEND_SEMANTIC_SCHOLAR, label: "Semantic Scholar" },
   { id: BACKEND_CORE, label: "CORE" },
-  { id: BACKEND_ARXIV, label: "arXiv" },
   { id: BACKEND_CROSSREF, label: "Crossref" },
   { id: BACKEND_YOKTEZ, label: "YÖK Tez" },
 ];
@@ -23,7 +21,6 @@ export function getBackendOptions(locale = DEFAULT_LOCALE) {
     [BACKEND_OPENALEX]: "providers.names.openalex",
     [BACKEND_SEMANTIC_SCHOLAR]: "providers.names.semanticScholar",
     [BACKEND_CORE]: "providers.names.core",
-    [BACKEND_ARXIV]: "providers.names.arxiv",
     [BACKEND_CROSSREF]: "providers.names.crossref",
     [BACKEND_YOKTEZ]: "providers.names.yoktez",
   };
@@ -37,11 +34,6 @@ export function getBackendOptions(locale = DEFAULT_LOCALE) {
     };
   });
 }
-
-const ARXIV_ATOM_API_URL = (
-  import.meta.env.VITE_ARXIV_API_URL ??
-  "https://export.arxiv.org/api/query"
-).trim();
 
 const OPENALEX_API_URL = (
   import.meta.env.VITE_OPENALEX_API_URL ??
@@ -62,21 +54,6 @@ const CORE_API_URL = (
   import.meta.env.VITE_CORE_API_URL ??
   "https://api.core.ac.uk/v3/search/works/"
 ).trim();
-
-const ARXIV_FILTER_OPTIONS = [
-  { id: "all", labelKey: "providers.arxiv.all", fallbackLabel: "Tüm arXiv", query: "cat:*" },
-  { id: "cs", labelKey: "providers.common.computerScience", fallbackLabel: "Bilgisayar Bilimi", query: "cat:cs.*" },
-  { id: "cs-ai", labelKey: "providers.common.ai", fallbackLabel: "Yapay Zeka", query: "cat:cs.AI" },
-  { id: "cs-lg", labelKey: "providers.common.ml", fallbackLabel: "Makine Öğrenmesi", query: "cat:cs.LG" },
-  { id: "cs-cl", labelKey: "providers.common.nlp", fallbackLabel: "Doğal Dil İşleme", query: "cat:cs.CL" },
-  { id: "cs-cv", labelKey: "providers.common.cv", fallbackLabel: "Bilgisayarlı Görü", query: "cat:cs.CV" },
-  { id: "cs-ro", labelKey: "providers.common.robotics", fallbackLabel: "Robotik", query: "cat:cs.RO" },
-  { id: "math", labelKey: "providers.common.math", fallbackLabel: "Matematik", query: "cat:math.*" },
-  { id: "stat", labelKey: "providers.common.statistics", fallbackLabel: "İstatistik", query: "cat:stat.*" },
-  { id: "physics", labelKey: "providers.common.physics", fallbackLabel: "Fizik", query: "cat:physics.*" },
-  { id: "q-bio", labelKey: "providers.common.quantBiology", fallbackLabel: "Kantitatif Biyoloji", query: "cat:q-bio.*" },
-  { id: "econ", labelKey: "providers.common.economics", fallbackLabel: "Ekonomi", query: "cat:econ.*" },
-];
 
 const OPENALEX_FILTER_OPTIONS = [
   { id: "all", labelKey: "providers.openalex.all", fallbackLabel: "Tüm OpenAlex", search: "", filter: "" },
@@ -119,28 +96,6 @@ const CORE_FILTER_OPTIONS = [
   { id: "biology", labelKey: "providers.common.biology", fallbackLabel: "Biyoloji", query: "biology" },
   { id: "economics", labelKey: "providers.common.economics", fallbackLabel: "Ekonomi", query: "economics" },
 ];
-
-const ARXIV_CATEGORY_LABELS = {
-  "cs.AI": "Yapay Zeka",
-  "cs.CL": "Doğal Dil İşleme",
-  "cs.CV": "Bilgisayarlı Görü",
-  "cs.CR": "Güvenlik",
-  "cs.DC": "Dağıtık Sistemler",
-  "cs.GR": "Grafik",
-  "cs.IR": "Bilgi Erişimi",
-  "cs.LG": "Makine Öğrenmesi",
-  "cs.NE": "Sinir Ağları",
-  "cs.RO": "Robotik",
-  "econ.EM": "Ekonomi",
-  "eess.AS": "Ses ve Konuşma",
-  "eess.IV": "Görüntü ve Video",
-  "math.OC": "Optimizasyon ve Kontrol",
-  "math.PR": "Olasılık",
-  "physics.app-ph": "Uygulamalı Fizik",
-  "q-bio.NC": "Nörobilim ve Biliş",
-  "q-fin.ST": "İstatistiksel Finans",
-  "stat.ML": "İstatistiksel Öğrenme",
-};
 
 function getTranslatorForLocale(locale) {
   return createTranslator(locale ?? DEFAULT_LOCALE);
@@ -196,14 +151,6 @@ export function getBackendMetadata(backend, locale = DEFAULT_LOCALE) {
       clientOnly: false,
     };
   }
-
-      if (backend === BACKEND_ARXIV) {
-    return {
-      ...getClientProviderMetadata(BACKEND_ARXIV, t("providers.names.arxiv"), locale),
-      feedErrorHint: t("providers.arxiv.feedErrorHint"),
-    };
-  }
-
   if (backend === BACKEND_CROSSREF) {
     return getClientProviderMetadata(BACKEND_CROSSREF, t("providers.names.crossref"), locale);
   }
@@ -274,12 +221,6 @@ function resolveBaseUrl(config = {}) {
     : "";
 }
 
-function resolveArxivBaseUrl(config = {}) {
-  return config.backend === BACKEND_ARXIV
-    ? normalizeBaseUrl(config.customArxivApiBaseUrl)
-    : "";
-}
-
 function buildUrl(path, params, config) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const baseUrl = resolveBaseUrl(config);
@@ -338,13 +279,6 @@ async function requestJsonFromBaseUrl(baseUrl, path, params) {
   return response.json();
 }
 
-function getArxivFilterById(filterId = "all") {
-  return (
-    ARXIV_FILTER_OPTIONS.find((option) => option.id === filterId) ??
-    ARXIV_FILTER_OPTIONS[0]
-  );
-}
-
 function getOpenAlexFilterById(filterId = "all") {
   const matched = OPENALEX_FILTER_OPTIONS.find((option) => option.id === filterId);
 
@@ -392,17 +326,6 @@ function readText(parent, namespace, tagName) {
   );
 }
 
-function formatArxivCategory(categoryCode = "") {
-  const normalizedCode = normalizeWhitespace(categoryCode);
-
-  if (!normalizedCode) {
-    return "arXiv";
-  }
-
-  return ARXIV_CATEGORY_LABELS[normalizedCode]
-    ? `${ARXIV_CATEGORY_LABELS[normalizedCode]} (${normalizedCode})`
-    : normalizedCode;
-}
 
 function buildAuthorLabel(names = []) {
   return names.filter(Boolean).join(", ");
@@ -490,81 +413,7 @@ function buildHeaders(extraHeaders = {}) {
   );
 }
 
-async function requestArxivFeed({ start = 0, maxResults = 4, filterId = "all" } = {}) {
-  const filter = getArxivFilterById(filterId);
-  const url = new URL(ARXIV_ATOM_API_URL);
-  url.searchParams.set("search_query", filter.query);
-  url.searchParams.set("start", String(start));
-  url.searchParams.set("max_results", String(maxResults));
-  url.searchParams.set("sortBy", "submittedDate");
-  url.searchParams.set("sortOrder", "descending");
 
-  const response = await fetch(url.toString());
-
-  if (!response.ok) {
-    throw new Error(`arXiv request failed: ${response.status}`);
-  }
-
-  const xml = await response.text();
-  const document = new DOMParser().parseFromString(xml, "application/xml");
-  const parserError = document.querySelector("parsererror");
-
-  if (parserError) {
-    throw new Error("arXiv response could not be parsed.");
-  }
-
-  const atomNs = "http://www.w3.org/2005/Atom";
-  const arxivNs = "http://arxiv.org/schemas/atom";
-  const openSearchNs = "http://a9.com/-/spec/opensearch/1.1/";
-  const totalResults = Number(
-    readText(document, openSearchNs, "totalResults") || "0",
-  );
-
-  const items = Array.from(document.getElementsByTagNameNS(atomNs, "entry")).map((entry) => {
-    const id = readText(entry, atomNs, "id");
-    const title = readText(entry, atomNs, "title");
-    const abstract = readText(entry, atomNs, "summary");
-    const published = readText(entry, atomNs, "published");
-    const updated = readText(entry, atomNs, "updated");
-    const authors = Array.from(entry.getElementsByTagNameNS(atomNs, "author"))
-      .map((author) => readText(author, atomNs, "name"))
-      .filter(Boolean);
-    const categories = Array.from(entry.getElementsByTagNameNS(atomNs, "category"))
-      .map((category) => normalizeWhitespace(category.getAttribute("term") ?? ""))
-      .filter(Boolean);
-    const primaryCategory =
-      normalizeWhitespace(
-        entry
-          .getElementsByTagNameNS(arxivNs, "primary_category")[0]
-          ?.getAttribute("term") ?? "",
-      ) || categories[0];
-    const links = Array.from(entry.getElementsByTagNameNS(atomNs, "link"));
-    const detailPageUrl =
-      links.find((link) => link.getAttribute("rel") === "alternate")?.getAttribute("href") ??
-      id.replace("/api/", "/abs/");
-    const pdfUrl =
-      links.find((link) => link.getAttribute("title") === "pdf")?.getAttribute("href") ??
-      "";
-
-    return {
-      id,
-      title: normalizeTitle(title),
-      abstract: normalizeAbstract(abstract),
-      author: buildAuthorLabel(authors),
-      university: "arXiv",
-      department: formatArxivCategory(primaryCategory),
-      year: resolveYear(published, updated),
-      pdfUrl: normalizePdfUrl(pdfUrl, { requirePdfLikePath: false }),
-      detailPageUrl,
-      keywords: categories.slice(0, 5),
-    };
-  });
-
-  return {
-    items,
-    nextCursor: start + items.length < totalResults ? start + items.length : start,
-  };
-}
 
 async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all" } = {}) {
   const filter = getOpenAlexFilterById(filterId);
@@ -878,19 +727,6 @@ async function requestCoreFeed({
 }
 
 export function fetchDisciplines(config) {
-  if (config?.backend === BACKEND_ARXIV) {
-    const customBaseUrl = resolveArxivBaseUrl(config);
-
-    if (customBaseUrl) {
-      return requestJsonFromBaseUrl(customBaseUrl, "/api/arxiv-topics");
-    }
-
-    return Promise.resolve({
-      items: localizeOptions(ARXIV_FILTER_OPTIONS, config?.locale)
-        .filter((option) => option.id !== "all")
-        .map((option) => ({ ...option })),
-    });
-  }
 
   if (config?.backend === BACKEND_OPENALEX) {
     return requestOpenAlexDisciplines().catch(() => ({
@@ -944,21 +780,6 @@ export function fetchDisciplines(config) {
 }
 
 export function fetchFeedPage(cursor, limit, config) {
-  if (config?.backend === BACKEND_ARXIV) {
-    const customBaseUrl = resolveArxivBaseUrl(config);
-
-    if (customBaseUrl) {
-      return requestJsonFromBaseUrl(customBaseUrl, "/api/arxiv-feed", {
-        cursor,
-        limit,
-      });
-    }
-
-    return requestArxivFeed({
-      start: Number(cursor ?? 0),
-      maxResults: Number(limit ?? 4),
-    });
-  }
 
   if (config?.backend === BACKEND_OPENALEX) {
     return requestOpenAlexFeed({
@@ -994,22 +815,6 @@ export function fetchFeedPage(cursor, limit, config) {
 }
 
 export function fetchDisciplineFeed(discipline, config) {
-  if (config?.backend === BACKEND_ARXIV) {
-    const customBaseUrl = resolveArxivBaseUrl(config);
-
-    if (customBaseUrl) {
-      return requestJsonFromBaseUrl(customBaseUrl, "/api/arxiv-feed", {
-        topic: discipline,
-        limit: 20,
-      });
-    }
-
-    return requestArxivFeed({
-      start: 0,
-      maxResults: 20,
-      filterId: discipline,
-    });
-  }
 
   if (config?.backend === BACKEND_OPENALEX) {
     return requestOpenAlexFeed({

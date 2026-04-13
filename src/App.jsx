@@ -8,7 +8,6 @@ import {
   triggerTabHaptic,
 } from "./native.js";
 import {
-  BACKEND_ARXIV,
   BACKEND_CORE,
   BACKEND_SEMANTIC_SCHOLAR,
   BACKEND_YOKTEZ,
@@ -134,13 +133,11 @@ const writeCachedValue = (key, value) => {
 const buildOfflineScope = ({
   backend,
   customApiBaseUrl,
-  customArxivApiBaseUrl,
 }) =>
   [
     OFFLINE_CACHE_VERSION,
     backend || "unknown",
     String(customApiBaseUrl ?? "").trim(),
-    String(customArxivApiBaseUrl ?? "").trim(),
   ].join("|");
 
 const getDisciplinesCacheKey = (scope) => `teztok-cache:disciplines:${scope}`;
@@ -374,8 +371,6 @@ function SettingsScreen({
   locale,
   backend,
   backendMeta,
-  arxivServerUrl,
-  onArxivServerUrlChange,
   semanticScholarApiKey,
   onSemanticScholarApiKeyChange,
   coreApiKey,
@@ -447,20 +442,7 @@ function SettingsScreen({
             </span>
           </div>
         ) : null}
-        {backend === BACKEND_ARXIV ? (
-          <div className="info-row">
-            <p>{t("settings.arxivServerUrl")}</p>
-            <input
-              className="settings-input"
-              type="url"
-              inputMode="url"
-              placeholder={t("settings.urlPlaceholder")}
-              value={arxivServerUrl}
-              onChange={(event) => onArxivServerUrlChange(event.target.value)}
-            />
-            <span>{t("settings.arxivServerHelp")}</span>
-          </div>
-        ) : null}
+
         {backend === BACKEND_SEMANTIC_SCHOLAR ? (
           <div className="info-row">
             <p>{t("settings.semanticScholarApiKey")}</p>
@@ -920,10 +902,7 @@ export default function App() {
     () => window.localStorage.getItem("teztok-backend") ?? DEFAULT_BACKEND,
   );
   const [yoktezServerUrl, setYoktezServerUrl] = useState(
-    () => window.localStorage.getItem("teztok-yoktez-server-url") ?? "",
-  );
-  const [arxivServerUrl, setArxivServerUrl] = useState(
-    () => window.localStorage.getItem("teztok-arxiv-server-url") ?? "",
+    () => window.localStorage.getItem("teztok-yoktez-server-url") ?? "https://yoktez-server.vercel.app/",
   );
   const [semanticScholarApiKey, setSemanticScholarApiKey] = useState(
     () => window.localStorage.getItem("teztok-semantic-scholar-api-key") ?? "",
@@ -988,7 +967,6 @@ export default function App() {
   const apiConfig = {
     backend,
     customApiBaseUrl: yoktezServerUrl,
-    customArxivApiBaseUrl: arxivServerUrl,
     semanticScholarApiKey,
     coreApiKey,
     locale,
@@ -1021,10 +999,6 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem("teztok-yoktez-server-url", yoktezServerUrl);
   }, [yoktezServerUrl]);
-
-  useEffect(() => {
-    window.localStorage.setItem("teztok-arxiv-server-url", arxivServerUrl);
-  }, [arxivServerUrl]);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -1248,7 +1222,6 @@ export default function App() {
       });
   }, [
     backend,
-    arxivServerUrl,
     yoktezServerUrl,
     offlineScope,
     defaultDisciplineId,
@@ -1286,7 +1259,6 @@ export default function App() {
     activeDisciplineOption,
     backend,
     yoktezServerUrl,
-    arxivServerUrl,
     feedMode,
   ]);
 
@@ -1696,8 +1668,6 @@ export default function App() {
             backgroundImageOptions={backgroundImageOptions}
             backend={backend}
             backendMeta={backendMeta}
-            arxivServerUrl={arxivServerUrl}
-            onArxivServerUrlChange={setArxivServerUrl}
             semanticScholarApiKey={semanticScholarApiKey}
             onSemanticScholarApiKeyChange={setSemanticScholarApiKey}
             coreApiKey={coreApiKey}
