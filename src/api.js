@@ -190,6 +190,27 @@ function normalizeWhitespace(value = "") {
   return String(value).replace(/\s+/g, " ").trim();
 }
 
+function decodeHtmlEntities(value = "") {
+  const input = String(value ?? "");
+
+  if (!input.includes("&")) {
+    return input;
+  }
+
+  if (typeof document !== "undefined") {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = input;
+    return textarea.value;
+  }
+
+  return input
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, "\"")
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
 function humanizeTypeLabel(value = "") {
   const normalized = normalizeWhitespace(value).replace(/[-_]+/g, " ");
 
@@ -201,7 +222,9 @@ function humanizeTypeLabel(value = "") {
 }
 
 function stripHtml(value = "") {
-  return normalizeWhitespace(String(value).replace(/<[^>]+>/g, " "));
+  return normalizeWhitespace(
+    decodeHtmlEntities(String(value).replace(/<[^>]+>/g, " ")),
+  );
 }
 
 function normalizeTitle(value = "") {
