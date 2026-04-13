@@ -383,6 +383,8 @@ function SettingsScreen({
   hapticsMode,
   backgroundImagesMode,
   contentLang,
+  year,
+  yearOptions,
   feedMode,
   onOpenSettingsPicker,
   showInstallPrompt,
@@ -404,6 +406,8 @@ function SettingsScreen({
   const contentLangLabel =
     contentLangOptions.find((option) => option.id === contentLang)?.label ??
     contentLang;
+  const yearLabel =
+    yearOptions.find((option) => option.id === year)?.label ?? year;
   const showNativeHaptics = isNativePlatform();
 
   return (
@@ -507,6 +511,11 @@ function SettingsScreen({
           label={t("settings.contentLanguage")}
           value={contentLangLabel}
           onOpen={() => onOpenSettingsPicker("contentLang")}
+        />
+        <SettingsSelectRow
+          label={t("settings.year")}
+          value={yearLabel}
+          onOpen={() => onOpenSettingsPicker("year")}
         />
       </div>
     </section>
@@ -955,6 +964,9 @@ export default function App() {
   const [contentLang, setContentLang] = useState(
     () => window.localStorage.getItem("teztok-content-lang") ?? "english",
   );
+  const [year, setYear] = useState(
+    () => window.localStorage.getItem("teztok-year") ?? "all",
+  );
   const [likedIds, setLikedIds] = useState(() => {
     const raw = window.localStorage.getItem("teztok-liked");
     return raw ? JSON.parse(raw) : [];
@@ -984,6 +996,7 @@ export default function App() {
     coreApiKey,
     locale,
     contentLang,
+    year: year === "all" ? "0" : year,
   };
   const offlineScope = buildOfflineScope(apiConfig);
   const requiresCustomYoktezUrl =
@@ -1045,6 +1058,10 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem("teztok-content-lang", contentLang);
   }, [contentLang]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-year", year);
+  }, [year]);
 
   useEffect(() => {
     setBackgroundImages(readCachedValue(getBackgroundImagesCacheKey(offlineScope), {}));
@@ -1114,6 +1131,14 @@ export default function App() {
   const contentLangOptions = [
     { id: "english", label: t("options.contentLang.english") },
     { id: "all", label: t("options.contentLang.all") },
+  ];
+  const CURRENT_YEAR = new Date().getFullYear();
+  const yearOptions = [
+    { id: "all", label: t("options.year.all") },
+    ...Array.from({ length: 30 }, (_, i) => {
+      const y = CURRENT_YEAR - i;
+      return { id: String(y), label: String(y) };
+    }),
   ];
   const localeOptions = LOCALE_OPTIONS.map((option) => ({
     id: option.id,
@@ -1655,7 +1680,14 @@ export default function App() {
                   selectedId: contentLang,
                   onSelect: setContentLang,
                 }
-              : null;
+              : settingsPicker === "year"
+                ? {
+                    title: t("settings.year"),
+                    options: yearOptions,
+                    selectedId: year,
+                    onSelect: setYear,
+                  }
+                : null;
 
   return (
     <div className="app-shell">
@@ -1664,6 +1696,15 @@ export default function App() {
           <h2>{t("app.title")}</h2>
         </div>
         <div className="header-actions">
+          <button
+            type="button"
+            className="topic-select"
+            onClick={() => setSettingsPicker("year")}
+            aria-label={t("picker.filterBy", { label: t("settings.year") })}
+            style={{ marginLeft: "0.5rem" }}
+          >
+            <span>{year === "all" ? t("settings.year") : year}</span>
+          </button>
           <button
             type="button"
             className="topic-select"
@@ -1711,6 +1752,8 @@ export default function App() {
             hapticsMode={hapticsMode}
             backgroundImagesMode={backgroundImagesMode}
             contentLang={contentLang}
+            year={year}
+            yearOptions={yearOptions}
             feedMode={feedMode}
             showInstallPrompt={canShowInstallPrompt}
             installPlatform={installPlatform}

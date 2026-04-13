@@ -221,9 +221,7 @@ function resolveYear(...candidates) {
 }
 
 function resolveBaseUrl(config = {}) {
-  return config.backend === BACKEND_YOKTEZ
-    ? normalizeBaseUrl(config.customApiBaseUrl)
-    : "";
+  return normalizeBaseUrl(config.customApiBaseUrl);
 }
 
 function buildUrl(path, params, config) {
@@ -420,7 +418,7 @@ function buildHeaders(extraHeaders = {}) {
 
 
 
-async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", contentLang = "all" } = {}) {
+async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", contentLang = "all", year = null } = {}) {
   const filter = getOpenAlexFilterById(filterId);
   const url = new URL(OPENALEX_API_URL);
 
@@ -438,6 +436,9 @@ async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", co
   }
   if (contentLang === "english") {
     filters.push("language:en");
+  }
+  if (year) {
+    filters.push(`publication_year:${year}`);
   }
 
   if (filters.length > 0) {
@@ -534,7 +535,7 @@ async function requestOpenAlexDisciplines() {
   };
 }
 
-async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", contentLang = "all" } = {}) {
+async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", contentLang = "all", year = null } = {}) {
   const filter = getCrossrefFilterById(filterId);
   const url = new URL(CROSSREF_API_URL);
   url.searchParams.set("rows", String(rows));
@@ -554,6 +555,9 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   }
   if (contentLang === "english") {
     filters.push("language:en");
+  }
+  if (year) {
+    filters.push(`from-pub-date:${year}-01-01,until-pub-date:${year}-12-31`);
   }
 
   if (filters.length > 0) {
@@ -623,10 +627,14 @@ async function requestSemanticScholarFeed({
   filterId = "all",
   apiKey = "",
   contentLang = "all",
+  year = null,
 } = {}) {
   const filter = getSemanticScholarFilterById(filterId);
   const url = new URL(SEMANTIC_SCHOLAR_API_URL);
   url.searchParams.set("query", filter.query);
+  if (year) {
+    url.searchParams.set("year", String(year));
+  }
   // Randomise starting position so each session shows different papers
   url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
   url.searchParams.set("limit", String(limit));
@@ -685,6 +693,7 @@ async function requestCoreFeed({
   filterId = "all",
   apiKey = "",
   contentLang = "all",
+  year = null,
 } = {}) {
   const filter = getCoreFilterById(filterId);
   const url = new URL(CORE_API_URL);
@@ -692,6 +701,9 @@ async function requestCoreFeed({
   let query = filter.query;
   if (contentLang === "english") {
     query = `(${query}) AND language.name:English`;
+  }
+  if (year) {
+    query = `(${query}) AND yearPublished:${year}`;
   }
   
   url.searchParams.set("q", query);
@@ -820,6 +832,7 @@ export function fetchFeedPage(cursor, limit, config) {
       page: Number(cursor ?? 1) || 1,
       perPage: Number(limit ?? 4),
       contentLang: config.contentLang,
+      year: config.year,
     });
   }
 
@@ -828,6 +841,7 @@ export function fetchFeedPage(cursor, limit, config) {
       offset: Number(cursor ?? 0),
       rows: Number(limit ?? 4),
       contentLang: config.contentLang,
+      year: config.year,
     });
   }
 
@@ -837,6 +851,7 @@ export function fetchFeedPage(cursor, limit, config) {
       limit: Number(limit ?? 4),
       apiKey: config.semanticScholarApiKey,
       contentLang: config.contentLang,
+      year: config.year,
     });
   }
 
@@ -846,10 +861,11 @@ export function fetchFeedPage(cursor, limit, config) {
       limit: Number(limit ?? 4),
       apiKey: config.coreApiKey,
       contentLang: config.contentLang,
+      year: config.year,
     });
   }
 
-  return requestJson("/api/feed", { cursor, limit }, config);
+  return requestJson("/api/feed", { cursor, limit, year: config.year }, config);
 }
 
 export function fetchDisciplineFeed(discipline, config) {
@@ -860,6 +876,7 @@ export function fetchDisciplineFeed(discipline, config) {
       perPage: 20,
       filterId: discipline,
       contentLang: config.contentLang,
+      year: config.year,
     });
   }
 
@@ -869,6 +886,7 @@ export function fetchDisciplineFeed(discipline, config) {
       rows: 20,
       filterId: discipline,
       contentLang: config.contentLang,
+      year: config.year,
     });
   }
 
@@ -879,6 +897,7 @@ export function fetchDisciplineFeed(discipline, config) {
       filterId: discipline,
       apiKey: config.semanticScholarApiKey,
       contentLang: config.contentLang,
+      year: config.year,
     });
   }
 
@@ -889,10 +908,11 @@ export function fetchDisciplineFeed(discipline, config) {
       filterId: discipline,
       apiKey: config.coreApiKey,
       contentLang: config.contentLang,
+      year: config.year,
     });
   }
 
-  return requestJson("/api/discipline-feed", { discipline }, config);
+  return requestJson("/api/discipline-feed", { discipline, year: config.year }, config);
 }
 
 export function fetchBackgroundImage({ title, keywords }, config) {
