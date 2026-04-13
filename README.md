@@ -124,3 +124,33 @@ npm run dev
 ```
 
 Frontend runs on `http://localhost:5173` and proxies API calls to the Express server on `http://localhost:3001`.
+
+## Standalone Frontend Deploy
+
+The frontend can now talk to any hosted TezTok API by setting:
+
+```bash
+VITE_API_BASE_URL=https://your-api.example.com
+```
+
+Without that env var, local development still uses the Vite `/api` proxy.
+
+Note: the live YOKTez scraping flow still belongs on a server or worker. The client app can be deployed independently, but the YOKTez session/cookie scraping layer should stay in a hosted backend.
+
+## PWA / offline behavior
+
+The web app now builds as a PWA.
+
+1. The app shell and static assets are precached during the production build.
+2. Feed requests are runtime-cached, so previously opened screens can load again when you reopen the app without the local server running.
+3. Client-only providers such as Crossref, OpenAlex, Semantic Scholar, CORE, and direct arXiv can benefit from cached responses after they have been fetched once.
+4. YÖK Tez still needs a reachable server for new uncached data, because that provider depends on a backend scraper/API.
+
+To test it locally:
+
+```bash
+npm run build
+npm run start
+```
+
+Open the app once, let a few feed pages load, then stop the server or go offline and reopen the installed app to verify cached content still appears.

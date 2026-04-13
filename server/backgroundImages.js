@@ -1,5 +1,11 @@
 const IMAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
+const IMAGE_NEGATIVE_CACHE_TTL_MS = 1000 * 60 * 15;
+const COMMONS_COOLDOWN_MS = 1000 * 60 * 10;
+const UNSPLASH_COOLDOWN_MS = 1000 * 60 * 10;
 const imageCache = new Map();
+let commonsCooldownUntil = 0;
+let unsplashCooldownUntil = 0;
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
 const buildImageKey = (query) => query.trim().toLocaleLowerCase("tr");
 
@@ -7,19 +13,19 @@ const getCachedImage = (key) => {
   const hit = imageCache.get(key);
 
   if (!hit) {
-    return null;
+    return undefined;
   }
 
   if (Date.now() > hit.expiresAt) {
     imageCache.delete(key);
-    return null;
+    return undefined;
   }
 
   return hit.value;
 };
 
-const setCachedImage = (key, value) => {
-  imageCache.set(key, { value, expiresAt: Date.now() + IMAGE_CACHE_TTL_MS });
+const setCachedImage = (key, value, ttlMs = IMAGE_CACHE_TTL_MS) => {
+  imageCache.set(key, { value, expiresAt: Date.now() + ttlMs });
   return value;
 };
 
@@ -34,7 +40,22 @@ function buildCandidateQueries({ title = "", keywords = [] }) {
   ].filter(Boolean);
 }
 
+const addUnsplashUtm = (rawUrl) => {
+  if (!rawUrl) {
+    return null;
+  }
+
+  const url = new URL(rawUrl);
+  url.searchParams.set("utm_source", "teztok");
+  url.searchParams.set("utm_medium", "referral");
+  return url.toString();
+};
+
 async function fetchCommonsImage(query) {
+  if (Date.now() < commonsCooldownUntil) {
+    return null;
+  }
+
   const url = new URL("https://commons.wikimedia.org/w/api.php");
   url.searchParams.set("action", "query");
   url.searchParams.set("generator", "search");
@@ -52,6 +73,11 @@ async function fetchCommonsImage(query) {
       "User-Agent": "TezTok/0.1 (academic thesis browsing prototype)"
     }
   });
+
+  if (response.status === 429) {
+    commonsCooldownUntil = Date.now() + COMMONS_COOLDOWN_MS;
+    return null;
+  }
 
   if (!response.ok) {
     throw new Error(`Wikimedia image search failed: ${response.status}`);
@@ -82,6 +108,59 @@ async function fetchCommonsImage(query) {
   );
 }
 
+async function fetchUnsplashImage(query) {
+  if (!UNSPLASH_ACCESS_KEY || Date.now() < unsplashCooldownUntil) {
+    return null;
+  }
+
+  const url = new URL("https://api.unsplash.com/search/photos");
+  url.searchParams.set("query", query);
+  url.searchParams.set("per_page", "8");
+  url.searchParams.set("orientation", "portrait");
+  url.searchParams.set("content_filter", "high");
+  url.searchParams.set("client_id", UNSPLASH_ACCESS_KEY);
+
+  const response = await fetch(url, {
+    headers: {
+      "Accept-Version": "v1",
+      "User-Agent": "TezTok/0.1 (academic thesis browsing prototype)",
+    },
+  });
+
+  if (response.status === 429) {
+    unsplashCooldownUntil = Date.now() + UNSPLASH_COOLDOWN_MS;
+    return null;
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    unsplashCooldownUntil = Date.now() + UNSPLASH_COOLDOWN_MS;
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`Unsplash image search failed: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const photo =
+    payload?.results?.find((item) => item?.urls?.regular && item?.user?.name) ?? null;
+
+  if (!photo) {
+    return null;
+  }
+
+  return {
+    source: "unsplash",
+    query,
+    title: photo.alt_description ?? photo.description ?? query,
+    imageUrl: photo.urls.regular,
+    pageUrl: addUnsplashUtm(photo.links?.html),
+    attributionLabel: `${photo.user.name} / Unsplash`,
+    attributionUrl: addUnsplashUtm(photo.user.links?.html ?? photo.links?.html),
+    license: "Unsplash",
+  };
+}
+
 export async function getBackgroundImage(params) {
   const candidates = buildCandidateQueries(params);
 
@@ -89,15 +168,23 @@ export async function getBackgroundImage(params) {
     const cacheKey = buildImageKey(query);
     const cached = getCachedImage(cacheKey);
 
-    if (cached) {
+    if (cached !== undefined) {
       return cached;
     }
 
-    const result = await fetchCommonsImage(query);
+    const commonsResult = await fetchCommonsImage(query);
 
-    if (result) {
-      return setCachedImage(cacheKey, result);
+    if (commonsResult) {
+      return setCachedImage(cacheKey, commonsResult);
     }
+
+    const unsplashResult = await fetchUnsplashImage(query);
+
+    if (unsplashResult) {
+      return setCachedImage(cacheKey, unsplashResult);
+    }
+
+    setCachedImage(cacheKey, null, IMAGE_NEGATIVE_CACHE_TTL_MS);
   }
 
   return null;

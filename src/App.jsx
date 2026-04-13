@@ -1,4 +1,26 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  isNativePlatform,
+  openExternalUrl,
+  triggerLikeHaptic,
+  triggerOpenHaptic,
+  triggerSelectionHaptic,
+  triggerTabHaptic,
+} from "./native.js";
+import {
+  BACKEND_ARXIV,
+  BACKEND_CORE,
+  BACKEND_SEMANTIC_SCHOLAR,
+  BACKEND_YOKTEZ,
+  DEFAULT_BACKEND,
+  fetchBackgroundImage,
+  fetchDisciplines,
+  fetchDisciplineFeed,
+  fetchFeedPage,
+  getBackendOptions,
+  getBackendMetadata,
+} from "./api.js";
+import { createTranslator, DEFAULT_LOCALE, LOCALE_OPTIONS } from "./i18n.js";
 
 function HeartIcon({ filled }) {
   return (
@@ -36,6 +58,35 @@ function PdfIcon() {
   );
 }
 
+function ScholarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="action-icon">
+      <path
+        d="m3 9 9-5 9 5-9 5-9-5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7 11.5V15c0 1.5 2.2 3 5 3s5-1.5 5-3v-3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M21 9v5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 const previewAbstract = (text, expanded) => {
   if (expanded || text.length < 140) {
     return text;
@@ -43,12 +94,6 @@ const previewAbstract = (text, expanded) => {
 
   return `${text.slice(0, 140).trim()}...`;
 };
-
-const tabs = [
-  { id: "feed", label: "Akış", icon: "home" },
-  { id: "likes", label: "Beğeniler", icon: "heart" },
-  { id: "settings", label: "Ayarlar", icon: "settings" },
-];
 
 const dedupeThesesById = (items) => {
   const seen = new Set();
@@ -68,6 +113,88 @@ const normalizePickerText = (value = "") =>
     .toLocaleLowerCase("tr")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+
+const OFFLINE_CACHE_VERSION = "v2";
+
+const readCachedValue = (key, fallback) => {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const writeCachedValue = (key, value) => {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+};
+
+const buildOfflineScope = ({
+  backend,
+  customApiBaseUrl,
+  customArxivApiBaseUrl,
+}) =>
+  [
+    OFFLINE_CACHE_VERSION,
+    backend || "unknown",
+    String(customApiBaseUrl ?? "").trim(),
+    String(customArxivApiBaseUrl ?? "").trim(),
+  ].join("|");
+
+const getDisciplinesCacheKey = (scope) => `teztok-cache:disciplines:${scope}`;
+const getFeedCacheKey = (scope, feedId) => `teztok-cache:feed:${scope}:${feedId}`;
+const getBackgroundImagesCacheKey = (scope) => `teztok-cache:backgrounds:${scope}`;
+
+const getInstallPlatform = () => {
+  if (isNativePlatform()) {
+    return "native";
+  }
+
+  const userAgent = String(navigator.userAgent ?? "").toLowerCase();
+  const isIos = /iphone|ipad|ipod/.test(userAgent);
+  const isAndroid = /android/.test(userAgent);
+
+  if (isIos) {
+    return "ios";
+  }
+
+  if (isAndroid) {
+    return "android";
+  }
+
+  return "web";
+};
+
+const isStandaloneDisplay = () => {
+  const displayModeQuery =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(display-mode: standalone)")
+      : null;
+
+  return displayModeQuery?.matches === true || window.navigator.standalone === true;
+};
+
+const buildGoogleScholarUrl = (thesis) => {
+  const query = [thesis.title].filter(Boolean).join(" ");
+  const url = new URL("https://scholar.google.com/scholar");
+  url.searchParams.set("hl", "en");
+  url.searchParams.set("as_sdt", "0,5");
+  url.searchParams.set("q", query);
+  return url.toString();
+};
+
+const shuffleItems = (items = []) => {
+  const nextItems = [...items];
+
+  for (let index = nextItems.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [nextItems[index], nextItems[swapIndex]] = [nextItems[swapIndex], nextItems[index]];
+  }
+
+  return nextItems;
+};
 
 function HomeIcon() {
   return (
@@ -134,7 +261,7 @@ function TabIcon({ icon, active }) {
   return <HomeIcon />;
 }
 
-function BottomTabBar({ activeTab, onSelect }) {
+function BottomTabBar({ activeTab, onSelect, tabs }) {
   return (
     <nav className="tab-bar" aria-label="Birincil">
       {tabs.map((tab) => (
@@ -144,7 +271,10 @@ function BottomTabBar({ activeTab, onSelect }) {
           className={activeTab === tab.id ? "tab-button active" : "tab-button"}
           onClick={() => onSelect(tab.id)}
         >
-          <TabIcon icon={tab.icon} active={activeTab === tab.id} />
+          <span className="tab-icon-wrap">
+            <TabIcon icon={tab.icon} active={activeTab === tab.id} />
+            {tab.badge ? <span className="tab-badge" aria-hidden="true" /> : null}
+          </span>
           <span>{tab.label}</span>
         </button>
       ))}
@@ -152,52 +282,321 @@ function BottomTabBar({ activeTab, onSelect }) {
   );
 }
 
-function SettingsScreen({
-  theme,
-  onThemeChange,
-  selectedDisciplineLabel,
-  onOpenDisciplinePicker,
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="settings-chevron">
+      <path
+        d="m7 4 6 6-6 6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SettingsSelectRow({
+  label,
+  value,
+  helper,
+  onOpen,
+  indicator,
+  valueAsBadge = false,
 }) {
+  return (
+    <div className="info-row">
+      <div className="settings-label-row">
+        <p>{label}</p>
+        {indicator ? <span className="settings-indicator">{indicator}</span> : null}
+      </div>
+      <button
+        type="button"
+        className="settings-select"
+        onClick={onOpen}
+      >
+        <span className={valueAsBadge ? "settings-value-badge" : undefined}>{value}</span>
+        <ChevronIcon />
+      </button>
+      {helper ? <span>{helper}</span> : null}
+    </div>
+  );
+}
+
+function InstallSettingsRow({ t, installPlatform, onInstallApp }) {
+  const value =
+    installPlatform === "android"
+      ? t("install.androidAction")
+      : installPlatform === "ios"
+        ? t("install.iosLabel")
+        : t("install.webAction");
+  const helper =
+    installPlatform === "android"
+      ? t("install.androidBody")
+      : installPlatform === "ios"
+        ? `${t("install.iosStep1")} ${t("install.iosStep2")} ${t("install.iosStep3")}`
+        : t("install.webBody");
+
+  if (installPlatform === "ios") {
+    return (
+      <div className="info-row">
+        <p>{t("install.title")}</p>
+        <div className="settings-static">
+          <span>{value}</span>
+        </div>
+        <span>{helper}</span>
+      </div>
+    );
+  }
+
+  return (
+    <SettingsSelectRow
+      label={t("install.title")}
+      value={value}
+      helper={helper}
+      onOpen={onInstallApp}
+      indicator=" "
+      valueAsBadge
+    />
+  );
+}
+
+function SettingsScreen({
+  t,
+  localeOptions,
+  backendOptions,
+  themeOptions,
+  hapticsOptions,
+  backgroundImageOptions,
+  feedModeOptions,
+  theme,
+  locale,
+  backend,
+  backendMeta,
+  arxivServerUrl,
+  onArxivServerUrlChange,
+  semanticScholarApiKey,
+  onSemanticScholarApiKeyChange,
+  coreApiKey,
+  onCoreApiKeyChange,
+  yoktezServerUrl,
+  onYoktezServerUrlChange,
+  defaultDisciplineLabel,
+  onOpenDefaultDisciplinePicker,
+  hapticsMode,
+  backgroundImagesMode,
+  feedMode,
+  onOpenSettingsPicker,
+  showInstallPrompt,
+  installPlatform,
+  onInstallApp,
+}) {
+  const themeLabel =
+    themeOptions.find((option) => option.id === theme)?.label ?? theme;
+  const localeLabel =
+    localeOptions.find((option) => option.id === locale)?.label ?? locale;
+  const backendLabel = backendOptions.find((option) => option.id === backend)?.label ?? backend;
+  const hapticsLabel =
+    hapticsOptions.find((option) => option.id === hapticsMode)?.label ?? hapticsMode;
+  const backgroundImagesLabel =
+    backgroundImageOptions.find((option) => option.id === backgroundImagesMode)?.label ??
+    backgroundImagesMode;
+  const feedModeLabel =
+    feedModeOptions.find((option) => option.id === feedMode)?.label ?? feedMode;
+  const showNativeHaptics = isNativePlatform();
+
   return (
     <section className="info-screen">
       <div className="info-list">
-        <div className="info-row">
-          <p>Varsayılan anabilim dalı</p>
-          <button
-            type="button"
-            className="settings-select"
-            onClick={onOpenDisciplinePicker}
-          >
-            <span>{selectedDisciplineLabel}</span>
-          </button>
-        </div>
-        <div className="info-row">
-          <p>Tema</p>
-          <div className="theme-toggle" role="group" aria-label="Tema">
-            {["light", "dark"].map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={theme === option ? "theme-button active" : "theme-button"}
-                onClick={() => onThemeChange(option)}
-              >
-                {option === "light" ? "Açık" : "Koyu"}
-              </button>
-            ))}
+        {showInstallPrompt ? (
+          <InstallSettingsRow
+            t={t}
+            installPlatform={installPlatform}
+            onInstallApp={onInstallApp}
+          />
+        ) : null}
+        <SettingsSelectRow
+          label={t("settings.source")}
+          value={backendLabel}
+          helper={
+            backendMeta.clientOnly
+              ? t("settings.sourceClientHelp", { label: backendLabel })
+              : t("settings.sourceServerHelp", { label: backendLabel })
+          }
+          onOpen={() => onOpenSettingsPicker("backend")}
+        />
+        <SettingsSelectRow
+          label={t("settings.language")}
+          value={localeLabel}
+          onOpen={() => onOpenSettingsPicker("locale")}
+        />
+        {backend === BACKEND_YOKTEZ ? (
+          <div className="info-row">
+            <p>{t("settings.yoktezServerUrl")}</p>
+            <input
+              className="settings-input"
+              type="url"
+              inputMode="url"
+              placeholder={t("settings.urlPlaceholder")}
+              value={yoktezServerUrl}
+              onChange={(event) => onYoktezServerUrlChange(event.target.value)}
+            />
+            <span>
+              {t("settings.yoktezServerHelp")}
+            </span>
           </div>
-        </div>
+        ) : null}
+        {backend === BACKEND_ARXIV ? (
+          <div className="info-row">
+            <p>{t("settings.arxivServerUrl")}</p>
+            <input
+              className="settings-input"
+              type="url"
+              inputMode="url"
+              placeholder={t("settings.urlPlaceholder")}
+              value={arxivServerUrl}
+              onChange={(event) => onArxivServerUrlChange(event.target.value)}
+            />
+            <span>{t("settings.arxivServerHelp")}</span>
+          </div>
+        ) : null}
+        {backend === BACKEND_SEMANTIC_SCHOLAR ? (
+          <div className="info-row">
+            <p>{t("settings.semanticScholarApiKey")}</p>
+            <input
+              className="settings-input"
+              type="password"
+              placeholder={t("settings.apiKeyPlaceholder")}
+              value={semanticScholarApiKey}
+              onChange={(event) => onSemanticScholarApiKeyChange(event.target.value)}
+            />
+            <span>{t("settings.semanticScholarApiKeyHelp")}</span>
+          </div>
+        ) : null}
+        {backend === BACKEND_CORE ? (
+          <div className="info-row">
+            <p>{t("settings.coreApiKey")}</p>
+            <input
+              className="settings-input"
+              type="password"
+              placeholder={t("settings.apiKeyPlaceholder")}
+              value={coreApiKey}
+              onChange={(event) => onCoreApiKeyChange(event.target.value)}
+            />
+            <span>{t("settings.coreApiKeyHelp")}</span>
+          </div>
+        ) : null}
+        <SettingsSelectRow
+          label={t("settings.defaultFilter")}
+          value={defaultDisciplineLabel}
+          onOpen={onOpenDefaultDisciplinePicker}
+        />
+        <SettingsSelectRow
+          label={t("settings.theme")}
+          value={themeLabel}
+          onOpen={() => onOpenSettingsPicker("theme")}
+        />
+        <SettingsSelectRow
+          label={t("settings.feedOrder")}
+          value={feedModeLabel}
+          onOpen={() => onOpenSettingsPicker("feedMode")}
+        />
+        {showNativeHaptics ? (
+          <SettingsSelectRow
+            label={t("settings.haptics")}
+            value={hapticsLabel}
+            onOpen={() => onOpenSettingsPicker("haptics")}
+          />
+        ) : null}
+        {backendMeta.supportsBackgroundImages ? (
+          <SettingsSelectRow
+            label={t("settings.backgroundImages")}
+            value={backgroundImagesLabel}
+            onOpen={() => onOpenSettingsPicker("backgroundImages")}
+          />
+        ) : null}
       </div>
     </section>
   );
 }
 
-function DisciplinePickerModal({
+function WheelPickerSheet({
+  t,
   open,
   title,
   options,
   selectedId,
   onClose,
   onSelect,
+  onSelectHaptic,
+}) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="sheet-backdrop" onClick={onClose} aria-hidden="true">
+      <section
+        className="wheel-sheet"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <div className="sheet-handle" />
+        <div className="sheet-header">
+          <p>{title}</p>
+          <button type="button" className="sheet-close" onClick={onClose}>
+            {t("picker.done")}
+          </button>
+        </div>
+        <div className="wheel-picker-list radio-list" role="radiogroup" aria-label={title}>
+          {options.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              role="radio"
+              aria-checked={selectedId === option.id}
+              className={
+                selectedId === option.id
+                  ? "wheel-picker-item active"
+                  : "wheel-picker-item"
+              }
+              onClick={() => {
+                onSelectHaptic();
+                onSelect(option.id);
+              }}
+            >
+              <span>{option.label}</span>
+              <span
+                className={
+                  selectedId === option.id
+                    ? "radio-indicator active"
+                    : "radio-indicator"
+                }
+                aria-hidden="true"
+              />
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DisciplinePickerModal({
+  t,
+  open,
+  title,
+  heading,
+  searchPlaceholder,
+  emptyMessage,
+  options,
+  selectedId,
+  onClose,
+  onSelect,
+  onSelectHaptic,
 }) {
   const [query, setQuery] = useState("");
   const [activeLetter, setActiveLetter] = useState("");
@@ -216,10 +615,11 @@ function DisciplinePickerModal({
   const letters = Array.from(
     new Set(
       options
+        .filter((option) => option.id !== "all")
         .map((option) => option.label.trim().charAt(0).toLocaleUpperCase("tr"))
         .filter(Boolean),
     ),
-  );
+  ).sort((left, right) => left.localeCompare(right, "tr"));
 
   const normalizedQuery = normalizePickerText(query);
   const visibleOptions = options.filter((option) => {
@@ -246,26 +646,26 @@ function DisciplinePickerModal({
         <div className="picker-header">
           <div>
             <p className="info-kicker">{title}</p>
-            <h3>Anabilim dalı seç</h3>
+            <h3>{heading}</h3>
           </div>
           <button type="button" className="sheet-close" onClick={onClose}>
-            Tamam
+            {t("picker.done")}
           </button>
         </div>
         <input
           className="picker-search"
           type="search"
-          placeholder="Anabilim dalı ara"
+          placeholder={searchPlaceholder}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <div className="picker-letters" aria-label="Harfe göre atla">
+        <div className="picker-letters" aria-label={t("picker.jumpByLetter")}>
           <button
             type="button"
             className={activeLetter === "" ? "picker-letter active" : "picker-letter"}
             onClick={() => setActiveLetter("")}
           >
-            Tümü
+            {t("picker.all")}
           </button>
           {letters.map((letter) => (
             <button
@@ -285,16 +685,17 @@ function DisciplinePickerModal({
               type="button"
               className={option.id === selectedId ? "picker-item active" : "picker-item"}
               onClick={() => {
+                onSelectHaptic();
                 onSelect(option.id);
                 onClose();
               }}
             >
               <span>{option.label}</span>
-              {option.id === selectedId ? <strong>Seçili</strong> : null}
+              {option.id === selectedId ? <strong>{t("picker.selected")}</strong> : null}
             </button>
           ))}
           {visibleOptions.length === 0 ? (
-            <div className="picker-empty">Bu aramayla eşleşen anabilim dalı yok.</div>
+            <div className="picker-empty">{emptyMessage}</div>
           ) : null}
         </div>
       </section>
@@ -302,7 +703,7 @@ function DisciplinePickerModal({
   );
 }
 
-function AbstractSheet({ thesis, open, onClose }) {
+function AbstractSheet({ thesis, open, onClose, t }) {
   if (!open) {
     return null;
   }
@@ -314,13 +715,13 @@ function AbstractSheet({ thesis, open, onClose }) {
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Tam özet"
+        aria-label={t("sheet.fullAbstract")}
       >
         <div className="sheet-handle" />
         <div className="sheet-header">
           <p>{thesis.author}</p>
           <button type="button" className="sheet-close" onClick={onClose}>
-            Tamam
+            {t("picker.done")}
           </button>
         </div>
         <h3>{thesis.title}</h3>
@@ -332,7 +733,7 @@ function AbstractSheet({ thesis, open, onClose }) {
   );
 }
 
-function LikedThesisList({ items, onOpenFeed, onRemoveLike }) {
+function LikedThesisList({ items, onOpenFeed, onRemoveLike, t }) {
   return (
     <section className="likes-list-screen">
       {items.length === 0 ? (
@@ -340,8 +741,8 @@ function LikedThesisList({ items, onOpenFeed, onRemoveLike }) {
           <div className="empty-face" aria-hidden="true">
             :(
           </div>
-          <p className="info-kicker">Henüz beğeni yok</p>
-          <h3>Bir tezi kaydetmek için iki kez dokun.</h3>
+          <p className="info-kicker">{t("likes.emptyKicker")}</p>
+          <h3>{t("likes.emptyTitle")}</h3>
         </div>
       ) : (
         <div className="likes-list">
@@ -364,7 +765,7 @@ function LikedThesisList({ items, onOpenFeed, onRemoveLike }) {
                 className="liked-item-remove"
                 onClick={() => onRemoveLike(thesis)}
               >
-                Beğeniden kaldır
+                {t("likes.remove")}
               </button>
             </article>
           ))}
@@ -375,14 +776,22 @@ function LikedThesisList({ items, onOpenFeed, onRemoveLike }) {
 }
 
 function ThesisCard({
+  t,
   thesis,
   liked,
   onToggleLike,
   onOpenAbstract,
   onSurfacePointerUp,
-  onOpenPdf,
+  pdfUrl,
+  scholarUrl,
+  scholarSameTab,
   backgroundImage,
+  backgroundMeta,
 }) {
+  const hasAbstract = Boolean(String(thesis.abstract ?? "").trim());
+  const hasPdf = Boolean(String(pdfUrl ?? "").trim());
+  const hasScholar = Boolean(String(scholarUrl ?? "").trim());
+
   return (
     <article
       className="thesis-screen"
@@ -414,35 +823,65 @@ function ThesisCard({
 
       <aside className="screen-side-actions">
         <button
+          type="button"
           className={liked ? "action active" : "action"}
           onClick={onToggleLike}
+          onPointerUp={(event) => event.stopPropagation()}
           data-no-double-tap="true"
         >
           <HeartIcon filled={liked} />
         </button>
-        <button
-          type="button"
-          className="action action-link"
-          onClick={onOpenPdf}
-          data-no-double-tap="true"
-        >
-          <PdfIcon />
-        </button>
+        {hasPdf ? (
+          <a
+            className="action action-link"
+            onPointerUp={(event) => event.stopPropagation()}
+            href={pdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-no-double-tap="true"
+          >
+            <PdfIcon />
+          </a>
+        ) : null}
+        {hasScholar ? (
+          <a
+            className="action action-link"
+            onPointerUp={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+
+              if (scholarSameTab) {
+                event.preventDefault();
+                openExternalUrl(scholarUrl, { preferSameTab: true });
+              }
+            }}
+            href={scholarUrl}
+            target={scholarSameTab ? undefined : "_blank"}
+            rel={scholarSameTab ? undefined : "noopener noreferrer"}
+            data-no-double-tap="true"
+            aria-label={t("likes.googleScholar")}
+            title={t("likes.googleScholar")}
+          >
+            <ScholarIcon />
+          </a>
+        ) : null}
       </aside>
 
       <div className="screen-bottom">
-        <div className="abstract-panel">
-          <p className="abstract-text">
-            {previewAbstract(thesis.abstract, false)}
-          </p>
-          <button
-            className="ghost-button"
-            onClick={onOpenAbstract}
-            data-no-double-tap="true"
-          >
-            Özeti oku
-          </button>
-        </div>
+        {hasAbstract ? (
+          <div className="abstract-panel">
+            <p className="abstract-text">
+              {previewAbstract(thesis.abstract, false)}
+            </p>
+            <button
+              className="ghost-button"
+              onClick={onOpenAbstract}
+              data-no-double-tap="true"
+            >
+              {t("thesis.readAbstract")}
+            </button>
+          </div>
+        ) : null}
 
         <div className="keywords-row">
           {thesis.keywords.map((keyword) => (
@@ -451,24 +890,78 @@ function ThesisCard({
             </span>
           ))}
         </div>
+
+        {backgroundMeta?.source === "unsplash" && backgroundMeta.attributionUrl ? (
+          <button
+            type="button"
+            className="background-credit"
+            onClick={() => openExternalUrl(backgroundMeta.attributionUrl)}
+            data-no-double-tap="true"
+          >
+            {t("thesis.photoCredit", {
+              label: backgroundMeta.attributionLabel ?? "Unsplash",
+            })}
+          </button>
+        ) : null}
       </div>
     </article>
   );
 }
 
 export default function App() {
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [installPlatform, setInstallPlatform] = useState(() => getInstallPlatform());
+  const [isInstalled, setIsInstalled] = useState(() => isNativePlatform() || isStandaloneDisplay());
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+  const [locale, setLocale] = useState(
+    () => window.localStorage.getItem("teztok-locale") ?? DEFAULT_LOCALE,
+  );
+  const [backend, setBackend] = useState(
+    () => window.localStorage.getItem("teztok-backend") ?? DEFAULT_BACKEND,
+  );
+  const [yoktezServerUrl, setYoktezServerUrl] = useState(
+    () => window.localStorage.getItem("teztok-yoktez-server-url") ?? "",
+  );
+  const [arxivServerUrl, setArxivServerUrl] = useState(
+    () => window.localStorage.getItem("teztok-arxiv-server-url") ?? "",
+  );
+  const [semanticScholarApiKey, setSemanticScholarApiKey] = useState(
+    () => window.localStorage.getItem("teztok-semantic-scholar-api-key") ?? "",
+  );
+  const [coreApiKey, setCoreApiKey] = useState(
+    () => window.localStorage.getItem("teztok-core-api-key") ?? "",
+  );
   const [feed, setFeed] = useState([]);
   const [cursor, setCursor] = useState(0);
   const [activeTab, setActiveTab] = useState("feed");
   const [disciplineOptions, setDisciplineOptions] = useState([
-    { id: "all", label: "Tüm Konular", query: "" },
+    {
+      id: "all",
+      label: createTranslator(
+        window.localStorage.getItem("teztok-locale") ?? DEFAULT_LOCALE,
+      )("providers.client.all"),
+      query: "",
+    },
   ]);
-  const [selectedDisciplineId, setSelectedDisciplineId] = useState(
+  const [defaultDisciplineId, setDefaultDisciplineId] = useState(
+    () => window.localStorage.getItem("teztok-default-discipline") ?? "all",
+  );
+  const [activeDisciplineId, setActiveDisciplineId] = useState(
     () => window.localStorage.getItem("teztok-default-discipline") ?? "all",
   );
   const [disciplinePickerOpen, setDisciplinePickerOpen] = useState(false);
+  const [disciplinePickerMode, setDisciplinePickerMode] = useState("active");
   const [theme, setTheme] = useState(
     () => window.localStorage.getItem("teztok-theme") ?? "dark",
+  );
+  const [feedMode, setFeedMode] = useState(
+    () => window.localStorage.getItem("teztok-feed-mode") ?? "random",
+  );
+  const [hapticsMode, setHapticsMode] = useState(
+    () => window.localStorage.getItem("teztok-haptics") ?? "normal",
+  );
+  const [backgroundImagesMode, setBackgroundImagesMode] = useState(
+    () => window.localStorage.getItem("teztok-background-images") ?? "always",
   );
   const [likedIds, setLikedIds] = useState(() => {
     const raw = window.localStorage.getItem("teztok-liked");
@@ -481,15 +974,29 @@ export default function App() {
   const [activeAbstractId, setActiveAbstractId] = useState(null);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [feedEmptyMessage, setFeedEmptyMessage] = useState("");
+  const [feedError, setFeedError] = useState("");
   const [heartBursts, setHeartBursts] = useState([]);
   const [backgroundImages, setBackgroundImages] = useState({});
   const [pendingOpenThesisId, setPendingOpenThesisId] = useState(null);
+  const [settingsPicker, setSettingsPicker] = useState(null);
   const observerRef = useRef(null);
   const tapTrackerRef = useRef({ id: null, time: 0, x: 0, y: 0 });
   const feedRef = useRef(null);
   const likesRef = useRef(null);
   const settingsRef = useRef(null);
   const scrollPositionsRef = useRef({ feed: 0, likes: 0, settings: 0 });
+  const apiConfig = {
+    backend,
+    customApiBaseUrl: yoktezServerUrl,
+    customArxivApiBaseUrl: arxivServerUrl,
+    semanticScholarApiKey,
+    coreApiKey,
+    locale,
+  };
+  const offlineScope = buildOfflineScope(apiConfig);
+  const requiresCustomYoktezUrl =
+    backend === BACKEND_YOKTEZ && !yoktezServerUrl.trim();
+  const allFeedCacheKey = getFeedCacheKey(offlineScope, `${feedMode}:all`);
 
   useEffect(() => {
     window.localStorage.setItem("teztok-liked", JSON.stringify(likedIds));
@@ -500,21 +1007,192 @@ export default function App() {
   }, [likedItems]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-default-discipline", selectedDisciplineId);
-  }, [selectedDisciplineId]);
+    window.localStorage.setItem("teztok-default-discipline", defaultDisciplineId);
+  }, [defaultDisciplineId]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-locale", locale);
+  }, [locale]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-backend", backend);
+  }, [backend]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-yoktez-server-url", yoktezServerUrl);
+  }, [yoktezServerUrl]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-arxiv-server-url", arxivServerUrl);
+  }, [arxivServerUrl]);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "teztok-semantic-scholar-api-key",
+      semanticScholarApiKey,
+    );
+  }, [semanticScholarApiKey]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-core-api-key", coreApiKey);
+  }, [coreApiKey]);
 
   useEffect(() => {
     window.localStorage.setItem("teztok-theme", theme);
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  const activeDisciplineOption =
-    disciplineOptions.find((option) => option.id === selectedDisciplineId) ??
-    disciplineOptions[0];
+  useEffect(() => {
+    window.localStorage.setItem("teztok-feed-mode", feedMode);
+  }, [feedMode]);
 
   useEffect(() => {
-    void fetch("/api/disciplines")
-      .then((response) => response.json())
+    window.localStorage.setItem("teztok-haptics", hapticsMode);
+  }, [hapticsMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-background-images", backgroundImagesMode);
+  }, [backgroundImagesMode]);
+
+  useEffect(() => {
+    setBackgroundImages(readCachedValue(getBackgroundImagesCacheKey(offlineScope), {}));
+  }, [offlineScope]);
+
+  useEffect(() => {
+    writeCachedValue(getBackgroundImagesCacheKey(offlineScope), backgroundImages);
+  }, [backgroundImages, offlineScope]);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    const handleInstall = () => setIsInstalled(true);
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      setDeferredInstallPrompt(event);
+    };
+    const mediaQuery = window.matchMedia?.("(display-mode: standalone)");
+    const handleDisplayModeChange = (event) => {
+      setIsInstalled(event.matches || window.navigator.standalone === true);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleInstall);
+    mediaQuery?.addEventListener?.("change", handleDisplayModeChange);
+    setInstallPlatform(getInstallPlatform());
+    setIsInstalled(isNativePlatform() || isStandaloneDisplay());
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstall);
+      mediaQuery?.removeEventListener?.("change", handleDisplayModeChange);
+    };
+  }, []);
+
+  const t = createTranslator(locale);
+  const canShowInstallPrompt =
+    !isInstalled &&
+    !isNativePlatform() &&
+    (installPlatform === "ios" || installPlatform === "android" || Boolean(deferredInstallPrompt));
+  const tabs = [
+    { id: "feed", label: t("tabs.feed"), icon: "home" },
+    { id: "likes", label: t("tabs.likes"), icon: "heart" },
+    { id: "settings", label: t("tabs.settings"), icon: "settings", badge: canShowInstallPrompt },
+  ];
+  const themeOptions = [
+    { id: "light", label: t("options.theme.light") },
+    { id: "dark", label: t("options.theme.dark") },
+  ];
+  const feedModeOptions = [
+    { id: "random", label: t("options.feedOrder.random") },
+    { id: "latest", label: t("options.feedOrder.latest") },
+  ];
+  const hapticsOptions = [
+    { id: "off", label: t("options.haptics.off") },
+    { id: "light", label: t("options.haptics.light") },
+    { id: "normal", label: t("options.haptics.normal") },
+  ];
+  const backgroundImageOptions = [
+    { id: "off", label: t("options.backgroundImages.off") },
+    { id: "always", label: t("options.backgroundImages.always") },
+  ];
+  const localeOptions = LOCALE_OPTIONS.map((option) => ({
+    id: option.id,
+    label: t(option.labelKey),
+  }));
+  const backendOptions = getBackendOptions(locale);
+  const activeDisciplineOption =
+    disciplineOptions.find((option) => option.id === activeDisciplineId) ??
+    disciplineOptions[0];
+  const defaultDisciplineOption =
+    disciplineOptions.find((option) => option.id === defaultDisciplineId) ??
+    disciplineOptions[0];
+  const backendMeta = getBackendMetadata(backend, locale);
+
+  const canLoadBackgroundImages =
+    backendMeta.supportsBackgroundImages && backgroundImagesMode === "always";
+
+  const fireTabHaptic = () => {
+    if (hapticsMode === "off") {
+      return;
+    }
+
+    void triggerTabHaptic();
+  };
+
+  const fireSelectionHaptic = () => {
+    if (hapticsMode === "off") {
+      return;
+    }
+
+    void triggerSelectionHaptic();
+  };
+
+  const fireLikeHaptic = (liked) => {
+    if (hapticsMode === "off") {
+      return;
+    }
+
+    void triggerLikeHaptic(liked);
+  };
+
+  const fireOpenHaptic = () => {
+    if (hapticsMode === "off") {
+      return;
+    }
+
+    void triggerOpenHaptic();
+  };
+
+  async function handleInstallApp() {
+    if (!deferredInstallPrompt) {
+      return;
+    }
+
+    try {
+      await deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+    } catch {}
+
+    setDeferredInstallPrompt(null);
+  }
+
+  useEffect(() => {
+    if (requiresCustomYoktezUrl) {
+      setDisciplineOptions([{ id: "all", label: backendMeta.allFilterLabel, query: "" }]);
+      setActiveDisciplineId("all");
+      setFeed([]);
+      setCursor(0);
+      setLoadingFeed(false);
+      setFeedError("");
+      setFeedEmptyMessage(t("providers.yoktez.requiresServer"));
+      return;
+    }
+
+    void fetchDisciplines(apiConfig)
       .then((data) => {
         const liveOptions = dedupeThesesById((data.items ?? []).map((item) => ({
           id: item.id,
@@ -522,20 +1200,76 @@ export default function App() {
           query: item.query,
         })));
 
-        setDisciplineOptions([
-          { id: "all", label: "Tüm Konular", query: "" },
+        const nextOptions = [
+          { id: "all", label: backendMeta.allFilterLabel, query: "" },
           ...liveOptions,
-        ]);
+        ];
+
+        setFeedError("");
+        setDisciplineOptions(nextOptions);
+        writeCachedValue(getDisciplinesCacheKey(offlineScope), nextOptions);
 
         const validIds = new Set(["all", ...liveOptions.map((item) => item.id)]);
-        setSelectedDisciplineId((current) =>
+        setDefaultDisciplineId((current) =>
           validIds.has(current) ? current : "all",
         );
+        setActiveDisciplineId((current) => {
+          if (validIds.has(current)) {
+            return current;
+          }
+
+          return validIds.has(defaultDisciplineId) ? defaultDisciplineId : "all";
+        });
       })
-      .catch(() => {});
-  }, []);
+      .catch((error) => {
+        const cachedOptions = readCachedValue(
+          getDisciplinesCacheKey(offlineScope),
+          [],
+        );
+        const fallbackOptions =
+          cachedOptions.length > 0
+            ? cachedOptions
+            : [{ id: "all", label: backendMeta.allFilterLabel, query: "" }];
+
+        setDisciplineOptions(fallbackOptions);
+        setDefaultDisciplineId((current) =>
+          fallbackOptions.some((item) => item.id === current) ? current : "all",
+        );
+        setActiveDisciplineId((current) =>
+          fallbackOptions.some((item) => item.id === current) ? current : "all",
+        );
+        setFeedError(cachedOptions.length > 0 ? "" : error.message);
+        setFeedEmptyMessage(
+          cachedOptions.length > 0
+            ? ""
+            : `${backendMeta.filterLabelPlural} alınamadı. ${backendMeta.feedErrorHint}`,
+        );
+        setLoadingFeed(false);
+      });
+  }, [
+    backend,
+    arxivServerUrl,
+    yoktezServerUrl,
+    offlineScope,
+    defaultDisciplineId,
+    backendMeta.allFilterLabel,
+    backendMeta.feedErrorHint,
+    backendMeta.filterLabelPlural,
+  ]);
 
   useEffect(() => {
+    if (requiresCustomYoktezUrl) {
+      return;
+    }
+
+    const hasResolvedActiveDiscipline =
+      activeDisciplineId === "all" ||
+      disciplineOptions.some((option) => option.id === activeDisciplineId);
+
+    if (!hasResolvedActiveDiscipline) {
+      return;
+    }
+
     if (observerRef.current) {
       observerRef.current.disconnect();
     }
@@ -546,21 +1280,34 @@ export default function App() {
     }
 
     void loadFeed(0, true);
-  }, [selectedDisciplineId]);
+  }, [
+    activeDisciplineId,
+    disciplineOptions,
+    activeDisciplineOption,
+    backend,
+    yoktezServerUrl,
+    arxivServerUrl,
+    feedMode,
+  ]);
+
 
   useEffect(() => {
+    if (!canLoadBackgroundImages) {
+      setBackgroundImages((current) =>
+        Object.keys(current).length === 0 ? current : {}
+      );
+      return;
+    }
+
     const uncached = feed
       .filter((thesis) => !backgroundImages[thesis.id])
       .slice(0, 6);
 
     uncached.forEach((thesis) => {
-      const params = new URLSearchParams({
+      void fetchBackgroundImage({
         title: thesis.title,
-        keywords: thesis.keywords.join(","),
-      });
-
-      void fetch(`/api/background-image?${params.toString()}`)
-        .then((response) => response.json())
+        keywords: thesis.keywords,
+      }, apiConfig)
         .then((data) => {
           if (!data.item) {
             return;
@@ -579,43 +1326,114 @@ export default function App() {
         })
         .catch(() => {});
     });
-  }, [feed, backgroundImages]);
+  }, [feed, backgroundImages, canLoadBackgroundImages, backend, yoktezServerUrl]);
 
   async function loadFeed(nextCursor, replace = false) {
-    setLoadingFeed(true);
-    setFeedEmptyMessage("");
-    if (replace) {
-      scrollPositionsRef.current.feed = 0;
-      feedRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    }
-    const response = await fetch(`/api/feed?cursor=${nextCursor}&limit=4`);
-    const data = await response.json();
+    const cacheKey = allFeedCacheKey;
 
-    setCursor(data.nextCursor);
-    setFeed((current) =>
-      replace
-        ? dedupeThesesById(data.items)
-        : dedupeThesesById([...current, ...data.items]),
-    );
-    setLoadingFeed(false);
+    try {
+      setLoadingFeed(true);
+      setFeedError("");
+      setFeedEmptyMessage("");
+      if (replace) {
+        scrollPositionsRef.current.feed = 0;
+        feedRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      }
+      const data = await fetchFeedPage(nextCursor, 4, apiConfig);
+      const fetchedItems =
+        feedMode === "random" ? shuffleItems(data.items ?? []) : (data.items ?? []);
+
+      setCursor(data.nextCursor);
+      setFeed((current) => {
+        const nextItems = replace
+          ? dedupeThesesById(fetchedItems)
+          : dedupeThesesById([...current, ...fetchedItems]);
+
+        writeCachedValue(cacheKey, {
+          items: nextItems,
+          cursor: data.nextCursor ?? 0,
+        });
+
+        return nextItems;
+      });
+      if (replace && fetchedItems.length === 0) {
+        setFeedEmptyMessage(t("thesis.noItems"));
+      }
+    } catch (error) {
+      const cachedFeed = readCachedValue(cacheKey, null);
+
+      if (replace && cachedFeed?.items?.length) {
+        setFeed(cachedFeed.items);
+        setCursor(cachedFeed.cursor ?? 0);
+        setFeedError("");
+        setFeedEmptyMessage("");
+      } else {
+        setFeedError(error.message);
+        setFeedEmptyMessage(
+          t("thesis.feedLoadError", { hint: backendMeta.feedErrorHint }),
+        );
+        if (replace) {
+          setFeed([]);
+        }
+      }
+    } finally {
+      setLoadingFeed(false);
+    }
   }
 
   async function loadDisciplineFeed(disciplineOption) {
-    setLoadingFeed(true);
-    setFeedEmptyMessage("");
-    scrollPositionsRef.current.feed = 0;
-    feedRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    const response = await fetch(
-      `/api/discipline-feed?discipline=${encodeURIComponent(disciplineOption.id)}`,
+    const cacheKey = getFeedCacheKey(
+      offlineScope,
+      `${feedMode}:discipline:${disciplineOption.id}`,
     );
-    const data = await response.json();
-    setCursor(0);
-    const uniqueItems = dedupeThesesById(data.items ?? []);
-    setFeed(uniqueItems);
-    if (uniqueItems.length === 0) {
-      setFeedEmptyMessage(`${disciplineOption.label} için tez bulunamadı.`);
+
+    try {
+      setLoadingFeed(true);
+      setFeedError("");
+      setFeedEmptyMessage("");
+      scrollPositionsRef.current.feed = 0;
+      feedRef.current?.scrollTo({ top: 0, behavior: "auto" });
+      const data = await fetchDisciplineFeed(disciplineOption.id, apiConfig);
+      setCursor(0);
+      const uniqueItems = dedupeThesesById(
+        feedMode === "random" ? shuffleItems(data.items ?? []) : (data.items ?? []),
+      );
+      setFeed(uniqueItems);
+      writeCachedValue(cacheKey, {
+        items: uniqueItems,
+        cursor: 0,
+      });
+      if (uniqueItems.length === 0) {
+        setFeedEmptyMessage(
+          t("thesis.filterNoItems", { label: disciplineOption.label }),
+        );
+      }
+    } catch (error) {
+      const cachedFeed = readCachedValue(cacheKey, null);
+
+      if (cachedFeed?.items?.length) {
+        setFeed(cachedFeed.items);
+        setCursor(0);
+        setFeedError("");
+        setFeedEmptyMessage(
+          cachedFeed.items.length === 0
+            ? t("thesis.filterNoItems", { label: disciplineOption.label })
+            : "",
+        );
+      } else {
+        setFeed([]);
+        setCursor(0);
+        setFeedError(error.message);
+        setFeedEmptyMessage(
+          t("thesis.filterLoadError", {
+            label: disciplineOption.label,
+            hint: backendMeta.feedErrorHint,
+          }),
+        );
+      }
+    } finally {
+      setLoadingFeed(false);
     }
-    setLoadingFeed(false);
   }
 
   function setSentinel(node) {
@@ -644,6 +1462,9 @@ export default function App() {
   }
 
   function toggleLike(thesis) {
+    const isLiking = !likedIds.includes(thesis.id);
+    fireLikeHaptic(isLiking);
+
     setLikedIds((current) =>
       current.includes(thesis.id)
         ? current.filter((item) => item !== thesis.id)
@@ -742,10 +1563,12 @@ export default function App() {
       scrollPositionsRef.current[activeTab] = currentContainer.scrollTop;
     }
 
+    fireTabHaptic();
     setActiveTab(nextTab);
   }
 
   function openLikedItem(id) {
+    fireOpenHaptic();
     const likedThesis = likedFeed.find((item) => item.id === id);
 
     if (likedThesis) {
@@ -755,9 +1578,8 @@ export default function App() {
           : [likedThesis, ...current],
       );
     }
-
     setPendingOpenThesisId(id);
-    setSelectedDisciplineId("all");
+    setActiveDisciplineId("all");
     setActiveTab("feed");
   }
 
@@ -777,23 +1599,82 @@ export default function App() {
     });
   }, [activeTab, pendingOpenThesisId, feed]);
 
+  function handleOpenDisciplinePicker() {
+    fireSelectionHaptic();
+    setDisciplinePickerMode("active");
+    setDisciplinePickerOpen(true);
+  }
+
+  function handleOpenDefaultDisciplinePicker() {
+    fireSelectionHaptic();
+    setDisciplinePickerMode("default");
+    setDisciplinePickerOpen(true);
+  }
+
+  const settingsPickerConfig =
+    settingsPicker === "backend"
+      ? {
+          title: t("settings.source"),
+          options: backendOptions,
+          selectedId: backend,
+          onSelect: setBackend,
+        }
+      : settingsPicker === "locale"
+        ? {
+            title: t("settings.languageTitle"),
+            options: localeOptions,
+            selectedId: locale,
+            onSelect: setLocale,
+          }
+      : settingsPicker === "theme"
+        ? {
+            title: t("settings.theme"),
+            options: themeOptions,
+            selectedId: theme,
+            onSelect: setTheme,
+          }
+      : settingsPicker === "feedMode"
+        ? {
+            title: t("settings.feedOrder"),
+            options: feedModeOptions,
+            selectedId: feedMode,
+            onSelect: setFeedMode,
+          }
+        : settingsPicker === "haptics"
+          ? {
+              title: t("settings.haptics"),
+              options: hapticsOptions,
+              selectedId: hapticsMode,
+              onSelect: setHapticsMode,
+            }
+          : settingsPicker === "backgroundImages"
+            ? {
+                title: t("settings.backgroundImages"),
+                options: backgroundImageOptions,
+                selectedId: backgroundImagesMode,
+                onSelect: setBackgroundImagesMode,
+              }
+            : null;
+
   return (
     <div className="app-shell">
       <header className="floating-header">
         <div className="header-brand">
-          <h2>TezTok</h2>
+          <h2>{t("app.title")}</h2>
         </div>
         <div className="header-actions">
           <button
             type="button"
             className="topic-select"
-            onClick={() => setDisciplinePickerOpen(true)}
-            aria-label="Anabilim dalına göre filtrele"
+            onClick={handleOpenDisciplinePicker}
+            aria-label={t("picker.filterBy", { label: backendMeta.filterLabel })}
           >
-            <span>{activeDisciplineOption?.label ?? "Tüm Konular"}</span>
+            <span>{activeDisciplineOption?.label ?? backendMeta.allFilterLabel}</span>
           </button>
         </div>
       </header>
+
+      {!isOnline ? <div className="offline-banner">{t("app.offlineReady")}</div> : null}
 
       {activeTab === "settings" ? (
         <div
@@ -805,9 +1686,38 @@ export default function App() {
         >
           <SettingsScreen
             theme={theme}
-            onThemeChange={setTheme}
-            selectedDisciplineLabel={activeDisciplineOption?.label ?? "Tüm Konular"}
-            onOpenDisciplinePicker={() => setDisciplinePickerOpen(true)}
+            t={t}
+            locale={locale}
+            localeOptions={localeOptions}
+            backendOptions={backendOptions}
+            themeOptions={themeOptions}
+            feedModeOptions={feedModeOptions}
+            hapticsOptions={hapticsOptions}
+            backgroundImageOptions={backgroundImageOptions}
+            backend={backend}
+            backendMeta={backendMeta}
+            arxivServerUrl={arxivServerUrl}
+            onArxivServerUrlChange={setArxivServerUrl}
+            semanticScholarApiKey={semanticScholarApiKey}
+            onSemanticScholarApiKeyChange={setSemanticScholarApiKey}
+            coreApiKey={coreApiKey}
+            onCoreApiKeyChange={setCoreApiKey}
+            yoktezServerUrl={yoktezServerUrl}
+            onYoktezServerUrlChange={setYoktezServerUrl}
+            defaultDisciplineLabel={
+              defaultDisciplineOption?.label ?? backendMeta.allFilterLabel
+            }
+            onOpenDefaultDisciplinePicker={handleOpenDefaultDisciplinePicker}
+            hapticsMode={hapticsMode}
+            backgroundImagesMode={backgroundImagesMode}
+            feedMode={feedMode}
+            showInstallPrompt={canShowInstallPrompt}
+            installPlatform={installPlatform}
+            onInstallApp={handleInstallApp}
+            onOpenSettingsPicker={(pickerId) => {
+              fireSelectionHaptic();
+              setSettingsPicker(pickerId);
+            }}
           />
         </div>
       ) : activeTab === "likes" ? (
@@ -819,6 +1729,7 @@ export default function App() {
           }}
         >
           <LikedThesisList
+            t={t}
             items={likedFeed}
             onOpenFeed={openLikedItem}
             onRemoveLike={toggleLike}
@@ -835,11 +1746,13 @@ export default function App() {
           {activeTab === "feed" && loadingFeed && visibleFeed.length === 0 && (
             <section className="info-screen empty-state">
               <div className="empty-copy">
-                <p className="info-kicker">Yükleniyor</p>
+                <p className="info-kicker">{t("thesis.loadingKicker")}</p>
                 <h3>
                   {activeDisciplineOption.query
-                    ? `${activeDisciplineOption.label} tezleri getiriliyor...`
-                    : "En yeni tezler getiriliyor..."}
+                    ? t("thesis.loadingFiltered", { label: activeDisciplineOption.label })
+                    : feedMode === "random"
+                      ? t("thesis.loadingRandom")
+                      : t("thesis.loadingLatest")}
                 </h3>
               </div>
             </section>
@@ -859,18 +1772,20 @@ export default function App() {
               }
             >
               <ThesisCard
+                t={t}
                 thesis={thesis}
                 liked={likedIds.includes(thesis.id)}
                 onToggleLike={() => toggleLike(thesis)}
-                onOpenAbstract={() => setActiveAbstractId(thesis.id)}
-                onOpenPdf={() => {
-                  const targetUrl = thesis.pdfUrl || thesis.detailPageUrl;
-                  if (targetUrl) {
-                    window.open(targetUrl, "_blank", "noopener,noreferrer");
-                  }
+                onOpenAbstract={() => {
+                  fireSelectionHaptic();
+                  setActiveAbstractId(thesis.id);
                 }}
+                pdfUrl={thesis.pdfUrl}
+                scholarUrl={buildGoogleScholarUrl(thesis)}
+                scholarSameTab={installPlatform === "ios" && !isNativePlatform()}
                 onSurfacePointerUp={handlePointerUp(thesis.id)}
-                backgroundImage={backgroundImages[thesis.id]?.imageUrl}
+                backgroundImage={canLoadBackgroundImages ? backgroundImages[thesis.id]?.imageUrl : null}
+                backgroundMeta={canLoadBackgroundImages ? backgroundImages[thesis.id] : null}
               />
               {heartBursts
                 .filter((burst) => burst.thesisId === thesis.id)
@@ -888,13 +1803,13 @@ export default function App() {
           ))}
 
           {activeTab === "feed" && !activeDisciplineOption.query && loadingFeed && (
-            <div className="loading-strip">Daha fazla tez yükleniyor...</div>
+            <div className="loading-strip">{t("thesis.loadingMore")}</div>
           )}
 
           {activeTab === "feed" && activeDisciplineOption.query && loadingFeed && visibleFeed.length > 0 && (
             <div className="loading-overlay">
               <div className="loading-strip">
-                {activeDisciplineOption.label} yükleniyor...
+                {t("thesis.loadingOverlay", { label: activeDisciplineOption.label })}
               </div>
             </div>
           )}
@@ -902,27 +1817,55 @@ export default function App() {
           {activeTab === "feed" && !loadingFeed && visibleFeed.length === 0 && (
             <section className="info-screen empty-state">
               <div className="empty-copy">
-                <p className="info-kicker">Tez yok</p>
-                <h3>{feedEmptyMessage || "Şu anda gösterilecek tez yok."}</h3>
+                <p className="info-kicker">{t("thesis.noItemsTitle")}</p>
+                <h3>{feedEmptyMessage || t("thesis.noItems")}</h3>
+                {feedError ? <p>{feedError}</p> : null}
               </div>
             </section>
           )}
         </main>
       )}
 
-      <BottomTabBar activeTab={activeTab} onSelect={handleTabSelect} />
+      <BottomTabBar activeTab={activeTab} onSelect={handleTabSelect} tabs={tabs} />
       <DisciplinePickerModal
+        t={t}
         open={disciplinePickerOpen}
-        title="Anabilim Dalları"
+        title={backendMeta.filterLabelPlural}
+        heading={t("picker.chooseFilter", { label: backendMeta.filterLabel })}
+        searchPlaceholder={backendMeta.filterSearchPlaceholder}
+        emptyMessage={backendMeta.filterEmptyMessage}
         options={disciplineOptions}
-        selectedId={selectedDisciplineId}
+        selectedId={
+          disciplinePickerMode === "default" ? defaultDisciplineId : activeDisciplineId
+        }
         onClose={() => setDisciplinePickerOpen(false)}
-        onSelect={setSelectedDisciplineId}
+        onSelect={(value) => {
+          if (disciplinePickerMode === "default") {
+            setDefaultDisciplineId(value);
+            return;
+          }
+
+          setActiveDisciplineId(value);
+        }}
+        onSelectHaptic={fireSelectionHaptic}
       />
       <AbstractSheet
+        t={t}
         thesis={feed.find((item) => item.id === activeAbstractId)}
         open={Boolean(activeAbstractId)}
         onClose={() => setActiveAbstractId(null)}
+      />
+      <WheelPickerSheet
+        t={t}
+        open={Boolean(settingsPickerConfig)}
+        title={settingsPickerConfig?.title ?? ""}
+        options={settingsPickerConfig?.options ?? []}
+        selectedId={settingsPickerConfig?.selectedId ?? ""}
+        onClose={() => setSettingsPicker(null)}
+        onSelect={(value) => {
+          settingsPickerConfig?.onSelect(value);
+        }}
+        onSelectHaptic={fireSelectionHaptic}
       />
     </div>
   );

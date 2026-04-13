@@ -1,0 +1,9 @@
+{
+  "appId": "com.teztok.app",
+  "appName": "TezTok",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
