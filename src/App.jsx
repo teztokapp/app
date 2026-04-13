@@ -133,11 +133,15 @@ const writeCachedValue = (key, value) => {
 const buildOfflineScope = ({
   backend,
   customApiBaseUrl,
+  contentLang,
+  year,
 }) =>
   [
     OFFLINE_CACHE_VERSION,
     backend || "unknown",
     String(customApiBaseUrl ?? "").trim(),
+    contentLang || "all",
+    year || "0",
   ].join("|");
 
 const getDisciplinesCacheKey = (scope) => `teztok-cache:disciplines:${scope}`;
@@ -1307,6 +1311,8 @@ export default function App() {
     backend,
     yoktezServerUrl,
     feedMode,
+    year,
+    contentLang,
   ]);
 
 
