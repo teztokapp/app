@@ -2,11 +2,15 @@ import { createTranslator, DEFAULT_LOCALE } from "./i18n.js";
 
 export const BACKEND_OPENALEX = "openalex";
 export const BACKEND_CROSSREF = "crossref";
+export const BACKEND_SEMANTIC_SCHOLAR = "semantic-scholar";
+export const BACKEND_CORE = "core";
 export const BACKEND_YOKTEZ = "yoktez";
 export const DEFAULT_BACKEND = BACKEND_OPENALEX;
 
 export const BACKEND_OPTIONS = [
   { id: BACKEND_OPENALEX, label: "OpenAlex" },
+  { id: BACKEND_SEMANTIC_SCHOLAR, label: "Semantic Scholar" },
+  { id: BACKEND_CORE, label: "CORE" },
   { id: BACKEND_CROSSREF, label: "Crossref" },
   { id: BACKEND_YOKTEZ, label: "YÖK Tez" },
 ];
@@ -15,6 +19,8 @@ export function getBackendOptions(locale = DEFAULT_LOCALE) {
   const t = getTranslatorForLocale(locale);
   const labelKeys = {
     [BACKEND_OPENALEX]: "providers.names.openalex",
+    [BACKEND_SEMANTIC_SCHOLAR]: "providers.names.semanticScholar",
+    [BACKEND_CORE]: "providers.names.core",
     [BACKEND_CROSSREF]: "providers.names.crossref",
     [BACKEND_YOKTEZ]: "providers.names.yoktez",
   };
@@ -29,9 +35,30 @@ export function getBackendOptions(locale = DEFAULT_LOCALE) {
   });
 }
 
+const OPENALEX_API_URL = (
+  import.meta.env.VITE_OPENALEX_API_URL ??
+  "https://api.openalex.org/works"
+).trim();
+
+const CROSSREF_API_URL = (
+  import.meta.env.VITE_CROSSREF_API_URL ??
+  "https://api.crossref.org/works"
+).trim();
+
+const SEMANTIC_SCHOLAR_API_URL = (
+  import.meta.env.VITE_SEMANTIC_SCHOLAR_API_URL ??
+  "https://api.semanticscholar.org/graph/v1/paper/search"
+).trim();
+
+const CORE_API_URL = (
+  import.meta.env.VITE_CORE_API_URL ??
+  "https://api.core.ac.uk/v3/search/works/"
+).trim();
+
 // A fresh random seed each time the app is loaded.
-// OpenAlex uses it as a shuffle seed.
+// OpenAlex uses it as a shuffle seed; other backends use it as a random base offset.
 const SESSION_SEED = Math.floor(Math.random() * 1_000_000);
+const SESSION_BASE_OFFSET = Math.floor(Math.random() * 50_000);
 
 const OPENALEX_FILTER_OPTIONS = [
   { id: "all", labelKey: "providers.openalex.all", fallbackLabel: "Tüm OpenAlex", search: "", filter: "" },
@@ -53,6 +80,26 @@ const CROSSREF_FILTER_OPTIONS = [
   { id: "cv", labelKey: "providers.common.cv", fallbackLabel: "Bilgisayarlı Görü", query: "computer vision", type: "" },
   { id: "biology", labelKey: "providers.common.biology", fallbackLabel: "Biyoloji", query: "biology", type: "" },
   { id: "economics", labelKey: "providers.common.economics", fallbackLabel: "Ekonomi", query: "economics", type: "" },
+];
+
+const SEMANTIC_SCHOLAR_FILTER_OPTIONS = [
+  { id: "all", labelKey: "providers.semanticScholar.all", fallbackLabel: "Tüm Semantic Scholar", query: "research" },
+  { id: "ai", labelKey: "providers.common.ai", fallbackLabel: "Yapay Zeka", query: "\"artificial intelligence\"" },
+  { id: "ml", labelKey: "providers.common.ml", fallbackLabel: "Makine Öğrenmesi", query: "\"machine learning\"" },
+  { id: "nlp", labelKey: "providers.common.nlp", fallbackLabel: "Doğal Dil İşleme", query: "\"natural language processing\"" },
+  { id: "cv", labelKey: "providers.common.cv", fallbackLabel: "Bilgisayarlı Görü", query: "\"computer vision\"" },
+  { id: "biology", labelKey: "providers.common.biology", fallbackLabel: "Biyoloji", query: "biology" },
+  { id: "economics", labelKey: "providers.common.economics", fallbackLabel: "Ekonomi", query: "economics" },
+];
+
+const CORE_FILTER_OPTIONS = [
+  { id: "all", labelKey: "providers.core.all", fallbackLabel: "Tüm CORE", query: "research" },
+  { id: "ai", labelKey: "providers.common.ai", fallbackLabel: "Yapay Zeka", query: "\"artificial intelligence\"" },
+  { id: "ml", labelKey: "providers.common.ml", fallbackLabel: "Makine Öğrenmesi", query: "\"machine learning\"" },
+  { id: "nlp", labelKey: "providers.common.nlp", fallbackLabel: "Doğal Dil İşleme", query: "\"natural language processing\"" },
+  { id: "cv", labelKey: "providers.common.cv", fallbackLabel: "Bilgisayarlı Görü", query: "\"computer vision\"" },
+  { id: "biology", labelKey: "providers.common.biology", fallbackLabel: "Biyoloji", query: "biology" },
+  { id: "economics", labelKey: "providers.common.economics", fallbackLabel: "Ekonomi", query: "economics" },
 ];
 
 function getTranslatorForLocale(locale) {
@@ -111,6 +158,18 @@ export function getBackendMetadata(backend, locale = DEFAULT_LOCALE) {
   }
   if (backend === BACKEND_CROSSREF) {
     return getClientProviderMetadata(BACKEND_CROSSREF, t("providers.names.crossref"), locale);
+  }
+
+  if (backend === BACKEND_SEMANTIC_SCHOLAR) {
+    return getClientProviderMetadata(
+      BACKEND_SEMANTIC_SCHOLAR,
+      t("providers.names.semanticScholar"),
+      locale,
+    );
+  }
+
+  if (backend === BACKEND_CORE) {
+    return getClientProviderMetadata(BACKEND_CORE, t("providers.names.core"), locale);
   }
 
   return getClientProviderMetadata(BACKEND_OPENALEX, t("providers.names.openalex"), locale);
@@ -185,6 +244,7 @@ function buildUrl(path, params, config) {
 
   return baseUrl ? url.toString() : `${url.pathname}${url.search}`;
 }
+
 async function requestJson(path, params, config) {
   if (config?.backend === BACKEND_YOKTEZ && !resolveBaseUrl(config)) {
     throw new Error("YÖK Tez server URL is required.");
@@ -198,9 +258,6 @@ async function requestJson(path, params, config) {
 
   return response.json();
 }
-
-const OPENALEX_API_URL = "https://api.openalex.org/works";
-const CROSSREF_API_URL = "https://api.crossref.org/works";
 
 async function requestJsonFromBaseUrl(baseUrl, path, params) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -249,6 +306,20 @@ function getCrossrefFilterById(filterId = "all") {
   return (
     CROSSREF_FILTER_OPTIONS.find((option) => option.id === filterId) ??
     CROSSREF_FILTER_OPTIONS[0]
+  );
+}
+
+function getSemanticScholarFilterById(filterId = "all") {
+  return (
+    SEMANTIC_SCHOLAR_FILTER_OPTIONS.find((option) => option.id === filterId) ??
+    SEMANTIC_SCHOLAR_FILTER_OPTIONS[0]
+  );
+}
+
+function getCoreFilterById(filterId = "all") {
+  return (
+    CORE_FILTER_OPTIONS.find((option) => option.id === filterId) ??
+    CORE_FILTER_OPTIONS[0]
   );
 }
 
@@ -351,9 +422,9 @@ async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", co
   const filter = getOpenAlexFilterById(filterId);
   const url = new URL(OPENALEX_API_URL);
 
-  url.searchParams.set("per-page", String(perPage));
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("sort", "cited_by_count:desc");
+  // Use OpenAlex's native sample/seed to shuffle results on every new session
+  url.searchParams.set("sample", String(perPage));
+  url.searchParams.set("seed", String(SESSION_SEED + page)); // seed shifts per page so cards don't repeat
 
   if (filter.search) {
     url.searchParams.set("search", filter.search);
@@ -468,20 +539,25 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   const filter = getCrossrefFilterById(filterId);
   const url = new URL(CROSSREF_API_URL);
   url.searchParams.set("rows", String(rows));
-  url.searchParams.set("offset", String(offset));
+  // Start from a random base so every session surfaces different records
+  url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
+  // Remove deterministic sort so results vary
+  url.searchParams.set("sort", "relevance");
+  url.searchParams.set("order", "desc");
+
   if (filter.query) {
-    url.searchParams.set("query", filter.query);
-    url.searchParams.set("sort", "relevance");
-    url.searchParams.set("order", "desc");
+    url.searchParams.set("query.bibliographic", filter.query);
   }
 
   const filters = [];
   if (filter.type) {
     filters.push(`type:${filter.type}`);
   }
+  if (contentLang === "english") {
+    filters.push("language:en");
+  }
   if (year && year !== "all") {
-    filters.push(`from-pub-date:${year}-01-01`);
-    filters.push(`until-pub-date:${year}-12-31`);
+    filters.push(`from-pub-date:${year}-01-01,until-pub-date:${year}-12-31`);
   }
 
   if (filters.length > 0) {
@@ -545,6 +621,157 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   };
 }
 
+async function requestSemanticScholarFeed({
+  offset = 0,
+  limit = 4,
+  filterId = "all",
+  apiKey = "",
+  contentLang = "all",
+  year = null,
+} = {}) {
+  const filter = getSemanticScholarFilterById(filterId);
+  const url = new URL(SEMANTIC_SCHOLAR_API_URL);
+  url.searchParams.set("query", filter.query);
+  if (year && year !== "all") {
+    url.searchParams.set("year", String(year));
+  }
+  // Randomise starting position so each session shows different papers
+  url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set(
+    "fields",
+    [
+      "title",
+      "abstract",
+      "year",
+      "authors",
+      "url",
+      "openAccessPdf",
+      "fieldsOfStudy",
+      "publicationTypes",
+      "venue",
+    ].join(","),
+  );
+
+  const response = await fetch(url.toString(), {
+    headers: buildHeaders({
+      "x-api-key": apiKey.trim(),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Semantic Scholar request failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const items = (data.data ?? []).map((item) => ({
+    id: item.paperId ?? item.url ?? item.title,
+    title: normalizeTitle(item.title ?? ""),
+    abstract: normalizeAbstract(item.abstract ?? ""),
+    author: buildAuthorLabel((item.authors ?? []).map((author) => author.name)),
+    university: normalizeWhitespace(item.venue ?? "Semantic Scholar") || "Semantic Scholar",
+    department:
+      normalizeWhitespace((item.fieldsOfStudy ?? [])[0] ?? (item.publicationTypes ?? [])[0] ?? "Semantic Scholar") ||
+      "Semantic Scholar",
+    year: resolveYear(item.year),
+    pdfUrl: normalizePdfUrl(item.openAccessPdf?.url ?? "", {
+      requirePdfLikePath: false,
+    }),
+    detailPageUrl: item.url ?? "",
+    keywords: pickKeywords([...(item.fieldsOfStudy ?? []), ...(item.publicationTypes ?? [])]),
+  }));
+
+  return {
+    items,
+    nextCursor: items.length === limit ? offset + limit : offset,
+  };
+}
+
+async function requestCoreFeed({
+  offset = 0,
+  limit = 4,
+  filterId = "all",
+  apiKey = "",
+  contentLang = "all",
+  year = null,
+} = {}) {
+  const filter = getCoreFilterById(filterId);
+  const url = new URL(CORE_API_URL);
+
+  let query = filter.query;
+  if (contentLang === "english") {
+    query = `(${query}) AND language.name:English`;
+  }
+  if (year && year !== "all") {
+    query = `(${query}) AND yearPublished:${year}`;
+  }
+
+  url.searchParams.set("q", query);
+  url.searchParams.set("limit", String(limit));
+  // Randomise starting position so each session shows different papers
+  url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
+
+  const response = await fetch(url.toString(), {
+    headers: buildHeaders({
+      Authorization: apiKey.trim() ? `Bearer ${apiKey.trim()}` : "",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`CORE request failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const items = (data.results ?? data.data ?? []).map((item) => {
+    const authors = Array.isArray(item.authors)
+      ? item.authors.map((author) =>
+        typeof author === "string"
+          ? author
+          : normalizeWhitespace(
+            [author.name, author.given, author.family].filter(Boolean).join(" "),
+          ),
+      )
+      : [];
+
+    return {
+      id: item.id ?? item.doi ?? item.oaiPmhUrl ?? item.downloadUrl ?? item.title,
+      title: normalizeTitle(item.title ?? ""),
+      abstract: normalizeAbstract(item.abstract ?? item.description ?? ""),
+      author: buildAuthorLabel(authors),
+      university:
+        normalizeWhitespace(
+          item.publisher ??
+          item.journal ??
+          item.dataProvider?.name ??
+          item.repositoryDocument?.repositoryName ??
+          "CORE",
+        ) || "CORE",
+      department:
+        normalizeWhitespace(
+          (item.topics ?? [])[0] ??
+          (item.subjects ?? [])[0] ??
+          (item.fields ?? [])[0] ??
+          "CORE",
+        ) || "CORE",
+      year: resolveYear(item.yearPublished, item.publishedDate, item.createdDate),
+      pdfUrl: normalizePdfUrl(item.downloadUrl ?? item.fullTextIdentifier ?? "", {
+        allowCoreDownloadProxy: false,
+      }),
+      detailPageUrl: item.oaiPmhUrl ?? item.fullTextIdentifier ?? item.downloadUrl ?? "",
+      keywords: pickKeywords([
+        ...(item.topics ?? []),
+        ...(item.subjects ?? []),
+        ...(item.fields ?? []),
+      ]),
+    };
+  });
+
+  return {
+    items,
+    nextCursor: items.length === limit ? offset + limit : offset,
+  };
+}
+
 export function fetchDisciplines(config) {
 
   if (config?.backend === BACKEND_OPENALEX) {
@@ -567,6 +794,30 @@ export function fetchDisciplines(config) {
           id: option.id,
           label: option.label,
           query: option.query || option.type || option.id,
+        })),
+    });
+  }
+
+  if (config?.backend === BACKEND_SEMANTIC_SCHOLAR) {
+    return Promise.resolve({
+      items: localizeOptions(SEMANTIC_SCHOLAR_FILTER_OPTIONS, config?.locale)
+        .filter((option) => option.id !== "all")
+        .map((option) => ({
+          id: option.id,
+          label: option.label,
+          query: option.query,
+        })),
+    });
+  }
+
+  if (config?.backend === BACKEND_CORE) {
+    return Promise.resolve({
+      items: localizeOptions(CORE_FILTER_OPTIONS, config?.locale)
+        .filter((option) => option.id !== "all")
+        .map((option) => ({
+          id: option.id,
+          label: option.label,
+          query: option.query,
         })),
     });
   }
@@ -594,6 +845,26 @@ export function fetchFeedPage(cursor, limit, config) {
     });
   }
 
+  if (config?.backend === BACKEND_SEMANTIC_SCHOLAR) {
+    return requestSemanticScholarFeed({
+      offset: Number(cursor ?? 0),
+      limit: Number(limit ?? 4),
+      apiKey: config.semanticScholarApiKey,
+      contentLang: config.contentLang,
+      year: config.year,
+    });
+  }
+
+  if (config?.backend === BACKEND_CORE) {
+    return requestCoreFeed({
+      offset: Number(cursor ?? 0),
+      limit: Number(limit ?? 4),
+      apiKey: config.coreApiKey,
+      contentLang: config.contentLang,
+      year: config.year,
+    });
+  }
+
   return requestJson("/api/feed", { cursor, limit, year: config.year }, config);
 }
 
@@ -614,6 +885,28 @@ export function fetchDisciplineFeed(discipline, config) {
       offset: 0,
       rows: 20,
       filterId: discipline,
+      contentLang: config.contentLang,
+      year: config.year,
+    });
+  }
+
+  if (config?.backend === BACKEND_SEMANTIC_SCHOLAR) {
+    return requestSemanticScholarFeed({
+      offset: 0,
+      limit: 20,
+      filterId: discipline,
+      apiKey: config.semanticScholarApiKey,
+      contentLang: config.contentLang,
+      year: config.year,
+    });
+  }
+
+  if (config?.backend === BACKEND_CORE) {
+    return requestCoreFeed({
+      offset: 0,
+      limit: 20,
+      filterId: discipline,
+      apiKey: config.coreApiKey,
       contentLang: config.contentLang,
       year: config.year,
     });

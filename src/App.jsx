@@ -8,6 +8,8 @@ import {
   triggerTabHaptic,
 } from "./native.js";
 import {
+  BACKEND_CORE,
+  BACKEND_SEMANTIC_SCHOLAR,
   BACKEND_YOKTEZ,
   DEFAULT_BACKEND,
   fetchBackgroundImage,
@@ -50,6 +52,35 @@ function PdfIcon() {
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ScholarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="action-icon">
+      <path
+        d="m3 9 9-5 9 5-9 5-9-5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7 11.5V15c0 1.5 2.2 3 5 3s5-1.5 5-3v-3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M21 9v5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -345,6 +376,10 @@ function SettingsScreen({
   locale,
   backend,
   backendMeta,
+  semanticScholarApiKey,
+  onSemanticScholarApiKeyChange,
+  coreApiKey,
+  onCoreApiKeyChange,
   yoktezServerUrl,
   onYoktezServerUrlChange,
   defaultDisciplineLabel,
@@ -421,6 +456,32 @@ function SettingsScreen({
           </div>
         ) : null}
 
+        {backend === BACKEND_SEMANTIC_SCHOLAR ? (
+          <div className="info-row">
+            <p>{t("settings.semanticScholarApiKey")}</p>
+            <input
+              className="settings-input"
+              type="password"
+              placeholder={t("settings.apiKeyPlaceholder")}
+              value={semanticScholarApiKey}
+              onChange={(event) => onSemanticScholarApiKeyChange(event.target.value)}
+            />
+            <span>{t("settings.semanticScholarApiKeyHelp")}</span>
+          </div>
+        ) : null}
+        {backend === BACKEND_CORE ? (
+          <div className="info-row">
+            <p>{t("settings.coreApiKey")}</p>
+            <input
+              className="settings-input"
+              type="password"
+              placeholder={t("settings.apiKeyPlaceholder")}
+              value={coreApiKey}
+              onChange={(event) => onCoreApiKeyChange(event.target.value)}
+            />
+            <span>{t("settings.coreApiKeyHelp")}</span>
+          </div>
+        ) : null}
         <SettingsSelectRow
           label={t("settings.defaultFilter")}
           value={defaultDisciplineLabel}
@@ -861,6 +922,12 @@ export default function App() {
   const [yoktezServerUrl, setYoktezServerUrl] = useState(
     () => window.localStorage.getItem("teztok-yoktez-server-url") ?? "https://yoktez-server.vercel.app/",
   );
+  const [semanticScholarApiKey, setSemanticScholarApiKey] = useState(
+    () => window.localStorage.getItem("teztok-semantic-scholar-api-key") ?? "",
+  );
+  const [coreApiKey, setCoreApiKey] = useState(
+    () => window.localStorage.getItem("teztok-core-api-key") ?? "",
+  );
   const [feed, setFeed] = useState([]);
   const [cursor, setCursor] = useState(0);
   const [activeTab, setActiveTab] = useState("feed");
@@ -924,6 +991,8 @@ export default function App() {
   const apiConfig = {
     backend,
     customApiBaseUrl: yoktezServerUrl,
+    semanticScholarApiKey,
+    coreApiKey,
     locale,
     contentLang,
     year: year === "all" ? null : year,
@@ -956,6 +1025,17 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem("teztok-yoktez-server-url", yoktezServerUrl);
   }, [yoktezServerUrl]);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "teztok-semantic-scholar-api-key",
+      semanticScholarApiKey,
+    );
+  }, [semanticScholarApiKey]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-core-api-key", coreApiKey);
+  }, [coreApiKey]);
 
   useEffect(() => {
     window.localStorage.setItem("teztok-theme", theme);
@@ -1665,6 +1745,10 @@ export default function App() {
             contentLangOptions={contentLangOptions}
             backend={backend}
             backendMeta={backendMeta}
+            semanticScholarApiKey={semanticScholarApiKey}
+            onSemanticScholarApiKeyChange={setSemanticScholarApiKey}
+            coreApiKey={coreApiKey}
+            onCoreApiKeyChange={setCoreApiKey}
             yoktezServerUrl={yoktezServerUrl}
             onYoktezServerUrlChange={setYoktezServerUrl}
             defaultDisciplineLabel={
