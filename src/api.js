@@ -351,9 +351,9 @@ async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", co
   const filter = getOpenAlexFilterById(filterId);
   const url = new URL(OPENALEX_API_URL);
 
-  // Use OpenAlex's native sample/seed to shuffle results on every new session
-  url.searchParams.set("sample", String(perPage));
-  url.searchParams.set("seed", String(SESSION_SEED + page)); // seed shifts per page so cards don't repeat
+  url.searchParams.set("per-page", String(perPage));
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("sort", "cited_by_count:desc");
 
   if (filter.search) {
     url.searchParams.set("search", filter.search);
@@ -478,9 +478,6 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   const filters = [];
   if (filter.type) {
     filters.push(`type:${filter.type}`);
-  }
-  if (contentLang === "english") {
-    filters.push("language:en");
   }
   if (year && year !== "all") {
     filters.push(`from-pub-date:${year}-01-01`);
