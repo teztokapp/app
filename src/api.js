@@ -420,7 +420,7 @@ function buildHeaders(extraHeaders = {}) {
 
 
 
-async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all" } = {}) {
+async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", contentLang = "all" } = {}) {
   const filter = getOpenAlexFilterById(filterId);
   const url = new URL(OPENALEX_API_URL);
 
@@ -432,8 +432,16 @@ async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all" } =
     url.searchParams.set("search", filter.search);
   }
 
+  const filters = [];
   if (filter.filter) {
-    url.searchParams.set("filter", filter.filter);
+    filters.push(filter.filter);
+  }
+  if (contentLang === "english") {
+    filters.push("language:en");
+  }
+
+  if (filters.length > 0) {
+    url.searchParams.set("filter", filters.join(","));
   }
 
   const response = await fetch(url.toString());
@@ -526,7 +534,7 @@ async function requestOpenAlexDisciplines() {
   };
 }
 
-async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all" } = {}) {
+async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", contentLang = "all" } = {}) {
   const filter = getCrossrefFilterById(filterId);
   const url = new URL(CROSSREF_API_URL);
   url.searchParams.set("rows", String(rows));
@@ -540,8 +548,16 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all" } = 
     url.searchParams.set("query.bibliographic", filter.query);
   }
 
+  const filters = [];
   if (filter.type) {
-    url.searchParams.set("filter", `type:${filter.type}`);
+    filters.push(`type:${filter.type}`);
+  }
+  if (contentLang === "english") {
+    filters.push("language:en");
+  }
+
+  if (filters.length > 0) {
+    url.searchParams.set("filter", filters.join(","));
   }
 
   const response = await fetch(url.toString(), {
@@ -606,6 +622,7 @@ async function requestSemanticScholarFeed({
   limit = 4,
   filterId = "all",
   apiKey = "",
+  contentLang = "all",
 } = {}) {
   const filter = getSemanticScholarFilterById(filterId);
   const url = new URL(SEMANTIC_SCHOLAR_API_URL);
@@ -667,10 +684,17 @@ async function requestCoreFeed({
   limit = 4,
   filterId = "all",
   apiKey = "",
+  contentLang = "all",
 } = {}) {
   const filter = getCoreFilterById(filterId);
   const url = new URL(CORE_API_URL);
-  url.searchParams.set("q", filter.query);
+  
+  let query = filter.query;
+  if (contentLang === "english") {
+    query = `(${query}) AND language.name:English`;
+  }
+  
+  url.searchParams.set("q", query);
   url.searchParams.set("limit", String(limit));
   // Randomise starting position so each session shows different papers
   url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
@@ -795,6 +819,7 @@ export function fetchFeedPage(cursor, limit, config) {
     return requestOpenAlexFeed({
       page: Number(cursor ?? 1) || 1,
       perPage: Number(limit ?? 4),
+      contentLang: config.contentLang,
     });
   }
 
@@ -802,6 +827,7 @@ export function fetchFeedPage(cursor, limit, config) {
     return requestCrossrefFeed({
       offset: Number(cursor ?? 0),
       rows: Number(limit ?? 4),
+      contentLang: config.contentLang,
     });
   }
 
@@ -810,6 +836,7 @@ export function fetchFeedPage(cursor, limit, config) {
       offset: Number(cursor ?? 0),
       limit: Number(limit ?? 4),
       apiKey: config.semanticScholarApiKey,
+      contentLang: config.contentLang,
     });
   }
 
@@ -818,6 +845,7 @@ export function fetchFeedPage(cursor, limit, config) {
       offset: Number(cursor ?? 0),
       limit: Number(limit ?? 4),
       apiKey: config.coreApiKey,
+      contentLang: config.contentLang,
     });
   }
 
@@ -831,6 +859,7 @@ export function fetchDisciplineFeed(discipline, config) {
       page: 1,
       perPage: 20,
       filterId: discipline,
+      contentLang: config.contentLang,
     });
   }
 
@@ -839,6 +868,7 @@ export function fetchDisciplineFeed(discipline, config) {
       offset: 0,
       rows: 20,
       filterId: discipline,
+      contentLang: config.contentLang,
     });
   }
 
@@ -848,6 +878,7 @@ export function fetchDisciplineFeed(discipline, config) {
       limit: 20,
       filterId: discipline,
       apiKey: config.semanticScholarApiKey,
+      contentLang: config.contentLang,
     });
   }
 
@@ -857,6 +888,7 @@ export function fetchDisciplineFeed(discipline, config) {
       limit: 20,
       filterId: discipline,
       apiKey: config.coreApiKey,
+      contentLang: config.contentLang,
     });
   }
 

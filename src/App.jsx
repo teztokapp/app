@@ -381,6 +381,7 @@ function SettingsScreen({
   onOpenDefaultDisciplinePicker,
   hapticsMode,
   backgroundImagesMode,
+  contentLang,
   feedMode,
   onOpenSettingsPicker,
   showInstallPrompt,
@@ -399,6 +400,9 @@ function SettingsScreen({
     backgroundImagesMode;
   const feedModeLabel =
     feedModeOptions.find((option) => option.id === feedMode)?.label ?? feedMode;
+  const contentLangLabel =
+    contentLangOptions.find((option) => option.id === contentLang)?.label ??
+    contentLang;
   const showNativeHaptics = isNativePlatform();
 
   return (
@@ -498,6 +502,11 @@ function SettingsScreen({
             onOpen={() => onOpenSettingsPicker("backgroundImages")}
           />
         ) : null}
+        <SettingsSelectRow
+          label={t("settings.contentLanguage")}
+          value={contentLangLabel}
+          onOpen={() => onOpenSettingsPicker("contentLang")}
+        />
       </div>
     </section>
   );
@@ -942,6 +951,9 @@ export default function App() {
   const [backgroundImagesMode, setBackgroundImagesMode] = useState(
     () => window.localStorage.getItem("teztok-background-images") ?? "always",
   );
+  const [contentLang, setContentLang] = useState(
+    () => window.localStorage.getItem("teztok-content-lang") ?? "english",
+  );
   const [likedIds, setLikedIds] = useState(() => {
     const raw = window.localStorage.getItem("teztok-liked");
     return raw ? JSON.parse(raw) : [];
@@ -970,6 +982,7 @@ export default function App() {
     semanticScholarApiKey,
     coreApiKey,
     locale,
+    contentLang,
   };
   const offlineScope = buildOfflineScope(apiConfig);
   const requiresCustomYoktezUrl =
@@ -1027,6 +1040,10 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem("teztok-background-images", backgroundImagesMode);
   }, [backgroundImagesMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem("teztok-content-lang", contentLang);
+  }, [contentLang]);
 
   useEffect(() => {
     setBackgroundImages(readCachedValue(getBackgroundImagesCacheKey(offlineScope), {}));
@@ -1092,6 +1109,10 @@ export default function App() {
   const backgroundImageOptions = [
     { id: "off", label: t("options.backgroundImages.off") },
     { id: "always", label: t("options.backgroundImages.always") },
+  ];
+  const contentLangOptions = [
+    { id: "english", label: t("options.contentLang.english") },
+    { id: "all", label: t("options.contentLang.all") },
   ];
   const localeOptions = LOCALE_OPTIONS.map((option) => ({
     id: option.id,
@@ -1626,7 +1647,14 @@ export default function App() {
                 selectedId: backgroundImagesMode,
                 onSelect: setBackgroundImagesMode,
               }
-            : null;
+            : settingsPicker === "contentLang"
+              ? {
+                  title: t("settings.contentLanguage"),
+                  options: contentLangOptions,
+                  selectedId: contentLang,
+                  onSelect: setContentLang,
+                }
+              : null;
 
   return (
     <div className="app-shell">
@@ -1680,6 +1708,7 @@ export default function App() {
             onOpenDefaultDisciplinePicker={handleOpenDefaultDisciplinePicker}
             hapticsMode={hapticsMode}
             backgroundImagesMode={backgroundImagesMode}
+            contentLang={contentLang}
             feedMode={feedMode}
             showInstallPrompt={canShowInstallPrompt}
             installPlatform={installPlatform}

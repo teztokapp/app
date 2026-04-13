@@ -109,11 +109,16 @@ const translations = {
         off: "Kapalı",
         always: "Açık",
       },
+      contentLang: {
+        english: "Yalnızca İngilizce",
+        all: "Tüm diller",
+      },
     },
     settings: {
       source: "Kaynak",
       language: "Dil",
       languageTitle: "Dil",
+      contentLanguage: "İçerik dili",
       urlPlaceholder: "https://senin-sunucun.com",
       apiKeyPlaceholder: "API key",
       yoktezServerUrl: "YÖK Tez sunucu URL",
@@ -270,11 +275,16 @@ const translations = {
         off: "Off",
         always: "On",
       },
+      contentLang: {
+        english: "English only",
+        all: "All languages",
+      },
     },
     settings: {
       source: "Source",
       language: "Language",
       languageTitle: "Language",
+      contentLanguage: "Content language",
       urlPlaceholder: "https://your-server.com",
       apiKeyPlaceholder: "API key",
       yoktezServerUrl: "YÖK Tez server URL",
