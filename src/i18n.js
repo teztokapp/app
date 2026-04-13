@@ -35,20 +35,20 @@ const translations = {
         filterLabelPlural: "Konular",
         filterSearchPlaceholder: "Konu ara",
         filterEmptyMessage: "Bu aramayla eşleşen {label} konusu yok.",
-        all: "Tüm konular",
+        all: "Tüm Konular",
         feedErrorHint: "{label} verisi alınamadı.",
       },
       openalex: {
-        all: "Tüm konular",
+        all: "Tüm Konular",
       },
       crossref: {
-        all: "Tüm konular",
+        all: "Tüm Konular",
       },
       semanticScholar: {
-        all: "Tüm konular",
+        all: "Tüm Konular",
       },
       core: {
-        all: "Tüm konular",
+        all: "Tüm Konular",
       },
       yoktez: {
         filterLabel: "Anabilim dalı",
@@ -127,12 +127,6 @@ const translations = {
       apiKeyPlaceholder: "API key",
       yoktezServerUrl: "YÖK Tez sunucu URL",
       yoktezServerHelp: "API çağrıları bu adrese yönlendirilir.",
-      semanticScholarApiKey: "Semantic Scholar API key",
-      semanticScholarApiKeyHelp:
-        "İstersen boş bırakabilirsin ama rate limit daha sert olabilir.",
-      coreApiKey: "CORE API key",
-      coreApiKeyHelp:
-        "CORE genelde key bekliyor. Buraya girince Bearer olarak kullanılacak.",
       defaultFilter: "Varsayılan filtre",
       theme: "Tema",
       feedOrder: "Akış sırası",
@@ -181,8 +175,6 @@ const translations = {
       names: {
         openalex: "OpenAlex",
         crossref: "Crossref",
-        semanticScholar: "Semantic Scholar",
-        core: "CORE",
         yoktez: "YÖK Tez",
       },
       common: {
@@ -212,12 +204,6 @@ const translations = {
         all: "All topics",
       },
       crossref: {
-        all: "All topics",
-      },
-      semanticScholar: {
-        all: "All topics",
-      },
-      core: {
         all: "All topics",
       },
       yoktez: {
@@ -298,12 +284,6 @@ const translations = {
       yoktezServerUrl: "YÖK Tez server URL",
       yoktezServerHelp:
         "API calls will be sent to this address. Example: `https://example.com`",
-      semanticScholarApiKey: "Semantic Scholar API key",
-      semanticScholarApiKeyHelp:
-        "You can leave this empty, but rate limits may be stricter.",
-      coreApiKey: "CORE API key",
-      coreApiKeyHelp:
-        "CORE usually expects a key. It will be sent as a `Bearer` token.",
       defaultFilter: "Default filter",
       theme: "Theme",
       feedOrder: "Feed order",
