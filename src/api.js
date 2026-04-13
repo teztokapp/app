@@ -483,7 +483,8 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
     filters.push("language:en");
   }
   if (year && year !== "all") {
-    filters.push(`from-pub-date:${year}-01-01,until-pub-date:${year}-12-31`);
+    filters.push(`from-pub-date:${year}-01-01`);
+    filters.push(`until-pub-date:${year}-12-31`);
   }
 
   if (filters.length > 0) {
