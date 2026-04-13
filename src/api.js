@@ -5,7 +5,7 @@ export const BACKEND_CROSSREF = "crossref";
 export const BACKEND_SEMANTIC_SCHOLAR = "semantic-scholar";
 export const BACKEND_CORE = "core";
 export const BACKEND_YOKTEZ = "yoktez";
-export const DEFAULT_BACKEND = BACKEND_YOKTEZ;
+export const DEFAULT_BACKEND = BACKEND_OPENALEX;
 
 export const BACKEND_OPTIONS = [
   { id: BACKEND_OPENALEX, label: "OpenAlex" },
