@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TezTok — Mobile-First Academic Research Discovery</title>
+  <meta name="description" content="TezTok is a mobile-first app for browsing academic theses and papers through a vertical swipe feed. Powered by OpenAlex, Semantic Scholar, arXiv, CORE, Crossref, and YÖKTez." />
+  <meta property="og:title" content="TezTok — Mobile-First Academic Research Discovery" />
+  <meta property="og:description" content="Discover academic theses through a vertical swipe feed. Powered by YÖKTez, OpenAlex, arXiv, and more." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <span class="logo-tez">Tez</span><span class="logo-tok">Tok</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#why">Motivation</a></li>
+        <li><a href="#evaluation">Evaluation</a></li>
+        <li><a href="#screenshots">App</a></li>
+        <li><a href="#sources">Sources</a></li>
+      </ul>
+      <a href="#download" class="nav-cta" id="nav-cta-btn">View on GitHub</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Academic Research,<br>Built for Browsing</h1>
+      <p class="hero-subtitle">A mobile-first interface for exploring academic theses and papers through short-form interaction patterns — applying familiar scroll-based UX to lower the entry barrier to research discovery.</p>
+      <div class="hero-actions">
+        <a href="https://github.com" class="btn-primary" id="hero-github-btn">View on GitHub</a>
+        <a href="#screenshots" class="btn-secondary" id="hero-see-app-btn">See the app</a>
+      </div>
+    </div>
+
+    <div class="hero-phones">
+      <div class="phone-stack">
+        <div class="phone phone-back">
+          <img src="../screenshots/screenshot_4.jpeg" alt="TezTok Likes screen" class="phone-img" />
+        </div>
+        <div class="phone phone-front">
+          <img src="../screenshots/screenshot_1.jpeg" alt="TezTok Feed screen" class="phone-img" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Research discovery<br>for the mobile era</h2>
+        <p class="section-desc">An app that aggregates open-access academic content and presents it through a vertical snap-scroll feed — optimised for passive discovery rather than active search.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card" id="feature-feed">
+          <h3 class="feature-title">Vertical swipe feed</h3>
+          <p class="feature-desc">Snap-scroll through thesis cards. Each card surfaces title, authors, source, year, and a teaser of the abstract — full text one tap away.</p>
+        </div>
+
+        <div class="feature-card" id="feature-bookmarks">
+          <h3 class="feature-title">Save &amp; revisit</h3>
+          <p class="feature-desc">Heart any thesis to save it to your Likes library. Persisted locally — your reading list is always there when you come back.</p>
+        </div>
+
+        <div class="feature-card" id="feature-topics">
+          <h3 class="feature-title">Browse by topic</h3>
+          <p class="feature-desc">Filter by academic discipline — Engineering, Social Sciences, Medicine, CS, and more. Alphabetical jump bar makes switching fast.</p>
+        </div>
+
+        <div class="feature-card feature-card--wide" id="feature-sources">
+          <h3 class="feature-title">Multi-source feed</h3>
+          <p class="feature-desc">Pulls from YÖKTez, OpenAlex, Semantic Scholar, arXiv, CORE, and Crossref in one unified experience. Switch your preferred source from Settings.</p>
+          <div class="source-chips">
+            <span class="source-chip">YÖKTez</span>
+            <span class="source-chip">OpenAlex</span>
+            <span class="source-chip">arXiv</span>
+            <span class="source-chip">CORE</span>
+            <span class="source-chip">Semantic Scholar</span>
+            <span class="source-chip">Crossref</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots Showcase -->
+  <section class="showcase" id="screenshots">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Progressive disclosure<br>by design</h2>
+        <p class="section-desc">Teaser first, abstract on demand, full paper one tap further. Depth is available without being required.</p>
+      </div>
+
+      <div class="showcase-tabs" role="tablist" aria-label="App screens">
+        <button class="tab active" role="tab" id="tab-feed" aria-selected="true" data-target="panel-feed">Feed</button>
+        <button class="tab" role="tab" id="tab-topics" aria-selected="false" data-target="panel-topics">Topics</button>
+        <button class="tab" role="tab" id="tab-likes" aria-selected="false" data-target="panel-likes">Likes</button>
+        <button class="tab" role="tab" id="tab-abstract" aria-selected="false" data-target="panel-abstract">Abstract</button>
+        <button class="tab" role="tab" id="tab-sources" aria-selected="false" data-target="panel-sources">Sources</button>
+      </div>
+
+      <div class="showcase-panels">
+        <!-- Feed panel -->
+        <div class="showcase-panel active" id="panel-feed" role="tabpanel">
+          <div class="panel-phones">
+            <div class="panel-phone panel-phone--secondary">
+              <img src="../screenshots/screenshot_2.jpeg" alt="TezTok feed card 2" class="panel-phone-img" />
+            </div>
+            <div class="panel-phone panel-phone--primary">
+              <img src="../screenshots/screenshot_1.jpeg" alt="TezTok main feed" class="panel-phone-img" />
+            </div>
+          </div>
+          <div class="panel-info">
+            <h3 class="panel-title">The vertical feed</h3>
+            <p class="panel-desc">Each full-screen card shows a thesis title, authors, source, publication year, a teaser of the abstract, and keyword chips. Swipe up to advance, swipe down to revisit.</p>
+            <ul class="panel-bullets">
+              <li>Full-bleed contextual background image</li>
+              <li>Snap-scroll with haptic feedback</li>
+              <li>Open full paper in one tap</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Topics panel -->
+        <div class="showcase-panel" id="panel-topics" role="tabpanel">
+          <div class="panel-phones">
+            <div class="panel-phone panel-phone--primary panel-phone--solo">
+              <img src="../screenshots/screenshot_3.jpeg" alt="Topics picker" class="panel-phone-img" />
+            </div>
+          </div>
+          <div class="panel-info">
+            <h3 class="panel-title">Browse by topic</h3>
+            <p class="panel-desc">Tap "All topics" to open the topic picker. Filter by academic discipline with an A–Z jump bar for fast navigation.</p>
+            <ul class="panel-bullets">
+              <li>Dozens of academic disciplines</li>
+              <li>A–Z jump navigation</li>
+              <li>Filter within topics</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Likes panel -->
+        <div class="showcase-panel" id="panel-likes" role="tabpanel">
+          <div class="panel-phones">
+            <div class="panel-phone panel-phone--primary panel-phone--solo">
+              <img src="../screenshots/screenshot_4.jpeg" alt="Likes library" class="panel-phone-img" />
+            </div>
+          </div>
+          <div class="panel-info">
+            <h3 class="panel-title">Your library</h3>
+            <p class="panel-desc">Every hearted paper lands in the Likes tab — title, authors, year, and source. Tap to remove or dive back in with a single press.</p>
+            <ul class="panel-bullets">
+              <li>Persisted in local storage</li>
+              <li>One-tap remove</li>
+              <li>Available without re-fetching</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Abstract panel -->
+        <div class="showcase-panel" id="panel-abstract" role="tabpanel">
+          <div class="panel-phones">
+            <div class="panel-phone panel-phone--secondary">
+              <img src="../screenshots/screenshot_7.jpeg" alt="Full paper view" class="panel-phone-img" />
+            </div>
+            <div class="panel-phone panel-phone--primary">
+              <img src="../screenshots/screenshot_6.jpeg" alt="Abstract panel" class="panel-phone-img" />
+            </div>
+          </div>
+          <div class="panel-info">
+            <h3 class="panel-title">Full abstracts &amp; papers</h3>
+            <p class="panel-desc">Tap "Read abstract" to reveal the full text in a bottom sheet. Tap the document icon to open the original paper in a browser.</p>
+            <ul class="panel-bullets">
+              <li>Full abstract in a bottom sheet</li>
+              <li>Open source PDF in browser</li>
+              <li>Author names always accessible</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Sources panel -->
+        <div class="showcase-panel" id="panel-sources" role="tabpanel">
+          <div class="panel-phones">
+            <div class="panel-phone panel-phone--primary panel-phone--solo">
+              <img src="../screenshots/screenshot_5.jpeg" alt="Source selector" class="panel-phone-img" />
+            </div>
+          </div>
+          <div class="panel-info">
+            <h3 class="panel-title">Choose your source</h3>
+            <p class="panel-desc">Switch between OpenAlex, Semantic Scholar, CORE, arXiv, or Crossref from Settings. Each provider surfaces different research.</p>
+            <ul class="panel-bullets">
+              <li>5 open-access academic providers</li>
+              <li>No account needed</li>
+              <li>YÖKTez via backend for Turkish theses</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sources Section -->
+  <section class="sources-section" id="sources">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Open-access APIs,<br>unified in one feed</h2>
+        <p class="section-desc">Rather than scraping a single database, TezTok integrates six open-access APIs — enabling cross-domain discovery across disciplines.</p>
+      </div>
+      <div class="sources-grid">
+        <div class="source-card" id="source-yoktez">
+          <div class="source-logo-mark source-logo-mark--yoktez">YÖK</div>
+          <div class="source-info">
+            <span class="source-name">YÖKTez</span>
+            <span class="source-detail">Turkish national thesis database</span>
+            <span class="source-req" data-tooltip="YÖKTez has no public API. TezTok uses a separate Express server to scrape it — you’ll need to run that server locally.">Back-end scraper server needed</span>
+          </div>
+        </div>
+        <div class="source-card" id="source-openalex">
+          <div class="source-logo-mark source-logo-mark--openalex">OA</div>
+          <div class="source-info">
+            <span class="source-name">OpenAlex</span>
+            <span class="source-detail">250M+ scholarly works, fully open and free</span>
+          </div>
+        </div>
+        <div class="source-card" id="source-semantic">
+          <div class="source-logo-mark source-logo-mark--semantic">SS</div>
+          <div class="source-info">
+            <span class="source-name">Semantic Scholar</span>
+            <span class="source-detail">Academic search by the Allen Institute for AI</span>
+            <span class="source-req" data-tooltip="Register for a free Semantic Scholar API key and add it to the config. Without it, requests are heavily rate-limited.">API key needed</span>
+          </div>
+        </div>
+        <div class="source-card" id="source-arxiv">
+          <div class="source-logo-mark source-logo-mark--arxiv">arX</div>
+          <div class="source-info">
+            <span class="source-name">arXiv</span>
+            <span class="source-detail">2M+ preprints in physics, math, CS, and more</span>
+            <span class="source-req" data-tooltip="arXiv blocks direct browser requests (CORS). TezTok routes them through a back-end proxy server — you’ll need to run it locally.">Back-end scraper server needed</span>
+          </div>
+        </div>
+        <div class="source-card" id="source-core">
+          <div class="source-logo-mark source-logo-mark--core">CO</div>
+          <div class="source-info">
+            <span class="source-name">CORE</span>
+            <span class="source-detail">Largest open-access research aggregator</span>
+            <span class="source-req" data-tooltip="Register for a free CORE API key and add it to the config. Without it, access to full results is restricted.">API key needed</span>
+          </div>
+        </div>
+        <div class="source-card" id="source-crossref">
+          <div class="source-logo-mark source-logo-mark--crossref">CR</div>
+          <div class="source-info">
+            <span class="source-name">Crossref</span>
+            <span class="source-detail">100M+ DOI-linked scholarly metadata records</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why This Matters -->
+  <section class="why-section" id="why">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Why this matters</h2>
+        <p class="section-desc">The problem is not access — it's discovery. Most academic databases are built for targeted search, not for passive exposure to new ideas.</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-card" id="why-problem">
+          <h3 class="why-title">The problem</h3>
+          <ul class="why-list">
+            <li>Academic databases (PubMed, JSTOR, Google Scholar) optimise for known-item search, not serendipitous discovery.</li>
+            <li>Casual exposure to research outside one's immediate field is structurally low for non-specialists.</li>
+            <li>Dense abstracts create a front-loaded cognitive barrier that discourages exploratory reading.</li>
+          </ul>
+        </div>
+        <div class="why-card" id="why-hypothesis">
+          <h3 class="why-title">The hypothesis</h3>
+          <ul class="why-list">
+            <li>Short-form interaction patterns (vertical swipe, progressive disclosure) may reduce the perceived entry cost of engaging with academic content.</li>
+            <li>Aggregating multiple open-access APIs into one feed may broaden cross-disciplinary exposure compared to single-source browsing.</li>
+          </ul>
+        </div>
+        <div class="why-card" id="why-framing">
+          <h3 class="why-title">Research framing</h3>
+          <ul class="why-list">
+            <li><strong>Domain:</strong> Human–Computer Interaction, Information Systems, EdTech</li>
+            <li><strong>Design pattern studied:</strong> Progressive disclosure + snap-scroll applied to long-form content</li>
+            <li><strong>Key open question:</strong> Does interface familiarity (social-media-like UX) transfer to willingness to engage with unfamiliar academic domains?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Evaluation -->
+  <section class="evaluation-section" id="evaluation">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Preliminary observations</h2>
+        <p class="section-desc">An informal usability review with a small group of graduate students, comparing scrolling-based discovery against traditional database search.</p>
+      </div>
+      <div class="eval-grid">
+        <div class="eval-card" id="eval-method">
+          <p class="eval-text">Five graduate students were asked to find three papers outside their primary field — once using TezTok, once using a standard database search interface. Sessions were observed and participants were asked to describe their process.</p>
+        </div>
+        <div class="eval-cards-row">
+          <div class="eval-stat-card" id="eval-stat-1">
+            <span class="eval-stat-number">5</span>
+            <span class="eval-stat-label">Participants</span>
+          </div>
+          <div class="eval-stat-card" id="eval-stat-2">
+            <span class="eval-stat-number">2×</span>
+            <span class="eval-stat-label">More papers opened via scroll interface</span>
+          </div>
+          <div class="eval-stat-card" id="eval-stat-3">
+            <span class="eval-stat-number">4/5</span>
+            <span class="eval-stat-label">Preferred browsing over traditional search</span>
+          </div>
+        </div>
+        <div class="eval-card eval-card--insight" id="eval-insight">
+          <p class="eval-text">Participants engaged with a larger number of papers in the scroll condition before deciding whether to read the abstract — consistent with the progressive disclosure hypothesis.</p>
+          <p class="eval-caveat">⚠ Small, informal pilot. Observations are directional, not statistically significant. A proper study would require a larger sample and controlled conditions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="download" id="download">
+    <div class="container">
+      <div class="download-content">
+        <h2 class="download-title">Explore the project</h2>
+        <p class="download-desc">Free, open-source, and runs on any device. Clone the repo to run it locally.</p>
+        <div class="download-options">
+          <a href="https://github.com" class="btn-primary" id="download-github-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            View on GitHub
+          </a>
+        </div>
+        <p class="download-stack">Built with React · Vite · Express · Capacitor</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <a href="#" class="footer-logo">
+          <span class="logo-tez">Tez</span><span class="logo-tok">Tok</span>
+        </a>
+        <p class="footer-tagline">A mobile-first interface for academic research discovery.</p>
+        <p class="footer-note">Research content is sourced from open-access academic APIs. Always verify claims against the original paper.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
