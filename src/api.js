@@ -9,11 +9,15 @@ export const DEFAULT_BACKEND = BACKEND_OPENALEX;
 
 export const BACKEND_OPTIONS = [
   { id: BACKEND_OPENALEX, label: "OpenAlex" },
-  { id: BACKEND_SEMANTIC_SCHOLAR, label: "Semantic Scholar" },
-  { id: BACKEND_CORE, label: "CORE" },
   { id: BACKEND_CROSSREF, label: "Crossref" },
   { id: BACKEND_YOKTEZ, label: "YÖK Tez" },
 ];
+
+export function sanitizeBackendSelection(backend) {
+  return BACKEND_OPTIONS.some((option) => option.id === backend)
+    ? backend
+    : DEFAULT_BACKEND;
+}
 
 export function getBackendOptions(locale = DEFAULT_LOCALE) {
   const t = getTranslatorForLocale(locale);
@@ -54,6 +58,9 @@ const CORE_API_URL = (
   import.meta.env.VITE_CORE_API_URL ??
   "https://api.core.ac.uk/v3/search/works/"
 ).trim();
+
+const CROSSREF_MAX_OFFSET = 10_000;
+const CROSSREF_RANDOM_OFFSET_WINDOW = 5_000;
 
 // A fresh random seed each time the app is loaded.
 // OpenAlex uses it as a shuffle seed; other backends use it as a random base offset.
@@ -538,9 +545,17 @@ async function requestOpenAlexDisciplines() {
 async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", contentLang = "all", year = null } = {}) {
   const filter = getCrossrefFilterById(filterId);
   const url = new URL(CROSSREF_API_URL);
-  url.searchParams.set("rows", String(rows));
-  // Start from a random base so every session surfaces different records
-  url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
+  const requestedRows = Math.max(Number(rows) || 4, 1);
+  const effectiveRows =
+    contentLang === "english"
+      ? Math.min(Math.max(requestedRows * 3, requestedRows), 20)
+      : requestedRows;
+  const baseOffset = SESSION_BASE_OFFSET % CROSSREF_RANDOM_OFFSET_WINDOW;
+  const safeOffset = (baseOffset + Math.max(Number(offset) || 0, 0)) % CROSSREF_MAX_OFFSET;
+
+  url.searchParams.set("rows", String(effectiveRows));
+  // Crossref rejects offsets above 10k, so keep paging in a safe window.
+  url.searchParams.set("offset", String(safeOffset));
   // Remove deterministic sort so results vary
   url.searchParams.set("sort", "relevance");
   url.searchParams.set("order", "desc");
@@ -552,9 +567,6 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   const filters = [];
   if (filter.type) {
     filters.push(`type:${filter.type}`);
-  }
-  if (contentLang === "english") {
-    filters.push("language:en");
   }
   if (year && year !== "all") {
     filters.push(`from-pub-date:${year}-01-01,until-pub-date:${year}-12-31`);
@@ -575,7 +587,10 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   }
 
   const data = await response.json();
-  const items = (data.message?.items ?? []).map((item) => {
+  const filteredResults = (data.message?.items ?? []).filter((item) =>
+    contentLang === "english" ? item.language === "en" : true,
+  );
+  const items = filteredResults.slice(0, requestedRows).map((item) => {
     const authors = (item.author ?? [])
       .map((author) =>
         normalizeWhitespace([author.given, author.family].filter(Boolean).join(" ")),
@@ -617,7 +632,7 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
 
   return {
     items,
-    nextCursor: items.length === rows ? offset + rows : offset,
+    nextCursor: filteredResults.length > 0 ? offset + effectiveRows : offset,
   };
 }
 

@@ -8,8 +8,6 @@ import {
   triggerTabHaptic,
 } from "./native.js";
 import {
-  BACKEND_CORE,
-  BACKEND_SEMANTIC_SCHOLAR,
   BACKEND_YOKTEZ,
   DEFAULT_BACKEND,
   fetchBackgroundImage,
@@ -18,6 +16,7 @@ import {
   fetchFeedPage,
   getBackendOptions,
   getBackendMetadata,
+  sanitizeBackendSelection,
 } from "./api.js";
 import { createTranslator, DEFAULT_LOCALE, LOCALE_OPTIONS } from "./i18n.js";
 
@@ -376,10 +375,6 @@ function SettingsScreen({
   locale,
   backend,
   backendMeta,
-  semanticScholarApiKey,
-  onSemanticScholarApiKeyChange,
-  coreApiKey,
-  onCoreApiKeyChange,
   yoktezServerUrl,
   onYoktezServerUrlChange,
   defaultDisciplineLabel,
@@ -456,32 +451,6 @@ function SettingsScreen({
           </div>
         ) : null}
 
-        {backend === BACKEND_SEMANTIC_SCHOLAR ? (
-          <div className="info-row">
-            <p>{t("settings.semanticScholarApiKey")}</p>
-            <input
-              className="settings-input"
-              type="password"
-              placeholder={t("settings.apiKeyPlaceholder")}
-              value={semanticScholarApiKey}
-              onChange={(event) => onSemanticScholarApiKeyChange(event.target.value)}
-            />
-            <span>{t("settings.semanticScholarApiKeyHelp")}</span>
-          </div>
-        ) : null}
-        {backend === BACKEND_CORE ? (
-          <div className="info-row">
-            <p>{t("settings.coreApiKey")}</p>
-            <input
-              className="settings-input"
-              type="password"
-              placeholder={t("settings.apiKeyPlaceholder")}
-              value={coreApiKey}
-              onChange={(event) => onCoreApiKeyChange(event.target.value)}
-            />
-            <span>{t("settings.coreApiKeyHelp")}</span>
-          </div>
-        ) : null}
         <SettingsSelectRow
           label={t("settings.defaultFilter")}
           value={defaultDisciplineLabel}
@@ -917,16 +886,12 @@ export default function App() {
     () => window.localStorage.getItem("teztok-locale") ?? DEFAULT_LOCALE,
   );
   const [backend, setBackend] = useState(
-    () => window.localStorage.getItem("teztok-backend") ?? DEFAULT_BACKEND,
+    () => sanitizeBackendSelection(
+      window.localStorage.getItem("teztok-backend") ?? DEFAULT_BACKEND,
+    ),
   );
   const [yoktezServerUrl, setYoktezServerUrl] = useState(
     () => window.localStorage.getItem("teztok-yoktez-server-url") ?? "https://yoktez-server.vercel.app/",
-  );
-  const [semanticScholarApiKey, setSemanticScholarApiKey] = useState(
-    () => window.localStorage.getItem("teztok-semantic-scholar-api-key") ?? "",
-  );
-  const [coreApiKey, setCoreApiKey] = useState(
-    () => window.localStorage.getItem("teztok-core-api-key") ?? "",
   );
   const [feed, setFeed] = useState([]);
   const [cursor, setCursor] = useState(0);
@@ -991,8 +956,6 @@ export default function App() {
   const apiConfig = {
     backend,
     customApiBaseUrl: yoktezServerUrl,
-    semanticScholarApiKey,
-    coreApiKey,
     locale,
     contentLang,
     year: year === "all" ? null : year,
@@ -1025,17 +988,6 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem("teztok-yoktez-server-url", yoktezServerUrl);
   }, [yoktezServerUrl]);
-
-  useEffect(() => {
-    window.localStorage.setItem(
-      "teztok-semantic-scholar-api-key",
-      semanticScholarApiKey,
-    );
-  }, [semanticScholarApiKey]);
-
-  useEffect(() => {
-    window.localStorage.setItem("teztok-core-api-key", coreApiKey);
-  }, [coreApiKey]);
 
   useEffect(() => {
     window.localStorage.setItem("teztok-theme", theme);
@@ -1745,10 +1697,6 @@ export default function App() {
             contentLangOptions={contentLangOptions}
             backend={backend}
             backendMeta={backendMeta}
-            semanticScholarApiKey={semanticScholarApiKey}
-            onSemanticScholarApiKeyChange={setSemanticScholarApiKey}
-            coreApiKey={coreApiKey}
-            onCoreApiKeyChange={setCoreApiKey}
             yoktezServerUrl={yoktezServerUrl}
             onYoktezServerUrlChange={setYoktezServerUrl}
             defaultDisciplineLabel={
