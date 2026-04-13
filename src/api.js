@@ -55,6 +55,11 @@ const CORE_API_URL = (
   "https://api.core.ac.uk/v3/search/works/"
 ).trim();
 
+// A fresh random seed each time the app is loaded.
+// OpenAlex uses it as a shuffle seed; other backends use it as a random base offset.
+const SESSION_SEED = Math.floor(Math.random() * 1_000_000);
+const SESSION_BASE_OFFSET = Math.floor(Math.random() * 50_000);
+
 const OPENALEX_FILTER_OPTIONS = [
   { id: "all", labelKey: "providers.openalex.all", fallbackLabel: "Tüm OpenAlex", search: "", filter: "" },
   { id: "computer-science", labelKey: "providers.common.computerScience", fallbackLabel: "Bilgisayar Bilimi", search: "", filter: "primary_topic.field.id:17" },
@@ -418,9 +423,10 @@ function buildHeaders(extraHeaders = {}) {
 async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all" } = {}) {
   const filter = getOpenAlexFilterById(filterId);
   const url = new URL(OPENALEX_API_URL);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("per-page", String(perPage));
-  url.searchParams.set("sort", "publication_date:desc");
+
+  // Use OpenAlex's native sample/seed to shuffle results on every new session
+  url.searchParams.set("sample", String(perPage));
+  url.searchParams.set("seed", String(SESSION_SEED + page)); // seed shifts per page so cards don't repeat
 
   if (filter.search) {
     url.searchParams.set("search", filter.search);
@@ -524,8 +530,10 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all" } = 
   const filter = getCrossrefFilterById(filterId);
   const url = new URL(CROSSREF_API_URL);
   url.searchParams.set("rows", String(rows));
-  url.searchParams.set("offset", String(offset));
-  url.searchParams.set("sort", "indexed");
+  // Start from a random base so every session surfaces different records
+  url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
+  // Remove deterministic sort so results vary
+  url.searchParams.set("sort", "relevance");
   url.searchParams.set("order", "desc");
 
   if (filter.query) {
@@ -602,7 +610,8 @@ async function requestSemanticScholarFeed({
   const filter = getSemanticScholarFilterById(filterId);
   const url = new URL(SEMANTIC_SCHOLAR_API_URL);
   url.searchParams.set("query", filter.query);
-  url.searchParams.set("offset", String(offset));
+  // Randomise starting position so each session shows different papers
+  url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
   url.searchParams.set("limit", String(limit));
   url.searchParams.set(
     "fields",
@@ -663,7 +672,8 @@ async function requestCoreFeed({
   const url = new URL(CORE_API_URL);
   url.searchParams.set("q", filter.query);
   url.searchParams.set("limit", String(limit));
-  url.searchParams.set("offset", String(offset));
+  // Randomise starting position so each session shows different papers
+  url.searchParams.set("offset", String(SESSION_BASE_OFFSET + offset));
 
   const response = await fetch(url.toString(), {
     headers: buildHeaders({
