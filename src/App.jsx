@@ -1303,8 +1303,6 @@ export default function App() {
     void loadFeed(0, true);
   }, [
     activeDisciplineId,
-    disciplineOptions,
-    activeDisciplineOption,
     backend,
     yoktezServerUrl,
     feedMode,
