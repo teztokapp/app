@@ -437,7 +437,7 @@ async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", co
   if (contentLang === "english") {
     filters.push("language:en");
   }
-  if (year) {
+  if (year && year !== "all") {
     filters.push(`publication_year:${year}`);
   }
 
@@ -473,15 +473,15 @@ async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", co
       university:
         normalizeWhitespace(
           primaryLocation.source?.display_name ??
-            primaryLocation.landing_page_url ??
-            "OpenAlex",
+          primaryLocation.landing_page_url ??
+          "OpenAlex",
         ) || "OpenAlex",
       department:
         normalizeWhitespace(
           primaryTopic?.field?.display_name ??
-            primaryTopic?.subfield?.display_name ??
-            primaryTopic?.display_name ??
-            item.type,
+          primaryTopic?.subfield?.display_name ??
+          primaryTopic?.display_name ??
+          item.type,
         ) || "OpenAlex",
       year: resolveYear(
         item.publication_year,
@@ -556,7 +556,7 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   if (contentLang === "english") {
     filters.push("language:en");
   }
-  if (year) {
+  if (year && year !== "all") {
     filters.push(`from-pub-date:${year}-01-01,until-pub-date:${year}-12-31`);
   }
 
@@ -632,7 +632,7 @@ async function requestSemanticScholarFeed({
   const filter = getSemanticScholarFilterById(filterId);
   const url = new URL(SEMANTIC_SCHOLAR_API_URL);
   url.searchParams.set("query", filter.query);
-  if (year) {
+  if (year && year !== "all") {
     url.searchParams.set("year", String(year));
   }
   // Randomise starting position so each session shows different papers
@@ -665,8 +665,8 @@ async function requestSemanticScholarFeed({
 
   const data = await response.json();
   const items = (data.data ?? []).map((item) => ({
-      id: item.paperId ?? item.url ?? item.title,
-      title: normalizeTitle(item.title ?? ""),
+    id: item.paperId ?? item.url ?? item.title,
+    title: normalizeTitle(item.title ?? ""),
     abstract: normalizeAbstract(item.abstract ?? ""),
     author: buildAuthorLabel((item.authors ?? []).map((author) => author.name)),
     university: normalizeWhitespace(item.venue ?? "Semantic Scholar") || "Semantic Scholar",
@@ -697,15 +697,15 @@ async function requestCoreFeed({
 } = {}) {
   const filter = getCoreFilterById(filterId);
   const url = new URL(CORE_API_URL);
-  
+
   let query = filter.query;
   if (contentLang === "english") {
     query = `(${query}) AND language.name:English`;
   }
-  if (year) {
+  if (year && year !== "all") {
     query = `(${query}) AND yearPublished:${year}`;
   }
-  
+
   url.searchParams.set("q", query);
   url.searchParams.set("limit", String(limit));
   // Randomise starting position so each session shows different papers
@@ -725,12 +725,12 @@ async function requestCoreFeed({
   const items = (data.results ?? data.data ?? []).map((item) => {
     const authors = Array.isArray(item.authors)
       ? item.authors.map((author) =>
-          typeof author === "string"
-            ? author
-            : normalizeWhitespace(
-                [author.name, author.given, author.family].filter(Boolean).join(" "),
-              ),
-        )
+        typeof author === "string"
+          ? author
+          : normalizeWhitespace(
+            [author.name, author.given, author.family].filter(Boolean).join(" "),
+          ),
+      )
       : [];
 
     return {
@@ -741,17 +741,17 @@ async function requestCoreFeed({
       university:
         normalizeWhitespace(
           item.publisher ??
-            item.journal ??
-            item.dataProvider?.name ??
-            item.repositoryDocument?.repositoryName ??
-            "CORE",
+          item.journal ??
+          item.dataProvider?.name ??
+          item.repositoryDocument?.repositoryName ??
+          "CORE",
         ) || "CORE",
       department:
         normalizeWhitespace(
           (item.topics ?? [])[0] ??
-            (item.subjects ?? [])[0] ??
-            (item.fields ?? [])[0] ??
-            "CORE",
+          (item.subjects ?? [])[0] ??
+          (item.fields ?? [])[0] ??
+          "CORE",
         ) || "CORE",
       year: resolveYear(item.yearPublished, item.publishedDate, item.createdDate),
       pdfUrl: normalizePdfUrl(item.downloadUrl ?? item.fullTextIdentifier ?? "", {

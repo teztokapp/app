@@ -516,11 +516,6 @@ function SettingsScreen({
           value={contentLangLabel}
           onOpen={() => onOpenSettingsPicker("contentLang")}
         />
-        <SettingsSelectRow
-          label={t("settings.year")}
-          value={yearLabel}
-          onOpen={() => onOpenSettingsPicker("year")}
-        />
       </div>
     </section>
   );
@@ -1000,7 +995,7 @@ export default function App() {
     coreApiKey,
     locale,
     contentLang,
-    year: year === "all" ? "0" : year,
+    year: year === "all" ? null : year,
   };
   const offlineScope = buildOfflineScope(apiConfig);
   const requiresCustomYoktezUrl =
@@ -1299,10 +1294,12 @@ export default function App() {
     }
 
     if (activeDisciplineOption.query) {
+      setFeed([]);
       void loadDisciplineFeed(activeDisciplineOption);
       return;
     }
 
+    setFeed([]);
     void loadFeed(0, true);
   }, [
     activeDisciplineId,
@@ -1691,7 +1688,10 @@ export default function App() {
                     title: t("settings.year"),
                     options: yearOptions,
                     selectedId: year,
-                    onSelect: setYear,
+                    onSelect: (id) => {
+                      setYear(id);
+                      setSettingsPicker(null);
+                    },
                   }
                 : null;
 
@@ -1705,9 +1705,11 @@ export default function App() {
           <button
             type="button"
             className="topic-select"
-            onClick={() => setSettingsPicker("year")}
+            onClick={() => {
+              fireSelectionHaptic();
+              setSettingsPicker("year");
+            }}
             aria-label={t("picker.filterBy", { label: t("settings.year") })}
-            style={{ marginLeft: "0.5rem" }}
           >
             <span>{year === "all" ? t("settings.year") : year}</span>
           </button>
