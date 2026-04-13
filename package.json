@@ -4,14 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm:dev:yoktez\" \"npm:dev:backgrounds\" \"npm:dev:client\"",
+    "dev": "concurrently \"npm:dev:yoktez\" \"npm:dev:client\"",
     "dev:server": "node --watch server/yoktezServer.js",
     "dev:yoktez": "node --watch server/yoktezServer.js",
-    "dev:backgrounds": "node --watch server/backgroundImageServer.js",
     "dev:client": "vite",
     "build": "vite build",
     "start": "NODE_ENV=production node server/yoktezServer.js",
-    "start:backgrounds": "NODE_ENV=production node server/backgroundImageServer.js",
     "cap:sync": "npm run build && npx cap sync",
     "cap:add:ios": "npx cap add ios",
     "cap:add:android": "npx cap add android",
@@ -39,5 +37,8 @@
     "concurrently": "^9.1.2",
     "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=20.x"
   }
 }
