@@ -113,6 +113,8 @@ const normalizePickerText = (value = "") =>
     .replace(/[\u0300-\u036f]/g, "");
 
 const OFFLINE_CACHE_VERSION = "v2";
+const SUPPORT_SLIDE_GAPS = [10, 20];
+const SUPPORT_URL = String(import.meta.env.VITE_SUPPORT_URL ?? "").trim();
 
 const readCachedValue = (key, fallback) => {
   try {
@@ -194,6 +196,31 @@ const shuffleItems = (items = []) => {
   }
 
   return nextItems;
+};
+
+const buildFeedSlides = (items = []) => {
+  const slides = [];
+  let nextSupportPosition = SUPPORT_SLIDE_GAPS[0];
+  let gapIndex = 0;
+
+  items.forEach((item, index) => {
+    slides.push({ kind: "thesis", thesis: item, key: item.id });
+
+    const position = index + 1;
+    const shouldInsertSupport = position === nextSupportPosition;
+
+    if (shouldInsertSupport) {
+      slides.push({
+        kind: "support",
+        key: `support-${position}`,
+      });
+
+      gapIndex = (gapIndex + 1) % SUPPORT_SLIDE_GAPS.length;
+      nextSupportPosition += SUPPORT_SLIDE_GAPS[gapIndex];
+    }
+  });
+
+  return slides;
 };
 
 function HomeIcon() {
@@ -359,6 +386,50 @@ function InstallSettingsRow({ t, installPlatform, onInstallApp }) {
       indicator=" "
       valueAsBadge
     />
+  );
+}
+
+function SupportSlide({ t, onContinue }) {
+  const hasSupportUrl = Boolean(SUPPORT_URL);
+
+  return (
+    <article className="thesis-screen support-screen">
+      <div className="screen-atmosphere" />
+      <div className="screen-grid" />
+
+      <div className="screen-topline">
+        <span className="meta-pill support-pill">{t("support.badge")}</span>
+      </div>
+
+      <div className="screen-main support-main">
+        <p className="screen-kicker">{t("support.kicker")}</p>
+        <h1>{t("support.title")}</h1>
+        <p className="support-copy">{t("support.body")}</p>
+      </div>
+
+      <div className="screen-bottom support-bottom">
+        <div className="support-actions">
+          {hasSupportUrl ? (
+            <button
+              type="button"
+              className="support-button support-button-primary"
+              onClick={() => openExternalUrl(SUPPORT_URL)}
+              data-no-double-tap="true"
+            >
+              {t("support.primaryAction")}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="support-button"
+            onClick={onContinue}
+            data-no-double-tap="true"
+          >
+            {t("support.secondaryAction")}
+          </button>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -1506,6 +1577,8 @@ export default function App() {
     likedItems.map((liked) => feed.find((item) => item.id === liked.id) ?? liked),
   );
   const visibleFeed = activeTab === "likes" ? likedFeed : feed;
+  const feedSlides =
+    activeTab === "feed" ? buildFeedSlides(visibleFeed) : [];
 
   useEffect(() => {
     const currentContainer =
@@ -1553,6 +1626,15 @@ export default function App() {
     setPendingOpenThesisId(id);
     setActiveDisciplineId("all");
     setActiveTab("feed");
+  }
+
+  function scrollToNextSlide(currentTarget) {
+    const slide = currentTarget.closest(".snap-screen");
+    const nextSlide = slide?.nextElementSibling;
+
+    if (nextSlide instanceof HTMLElement) {
+      nextSlide.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
   }
 
   useEffect(() => {
@@ -1756,47 +1838,59 @@ export default function App() {
             </section>
           )}
 
-          {visibleFeed.map((thesis, index) => (
+          {feedSlides.map((slide, index) => (
             <section
-              key={`${thesis.id}-${index}`}
+              key={`${slide.key}-${index}`}
               className="snap-screen"
-              data-thesis-id={thesis.id}
+              data-thesis-id={slide.kind === "thesis" ? slide.thesis.id : undefined}
               ref={
                 activeTab === "feed" &&
                 !activeDisciplineOption.query &&
-                index === visibleFeed.length - 1
+                index === feedSlides.length - 1
                   ? setSentinel
                   : null
               }
             >
-              <ThesisCard
-                t={t}
-                thesis={thesis}
-                liked={likedIds.includes(thesis.id)}
-                onToggleLike={() => toggleLike(thesis)}
-                onOpenAbstract={() => {
-                  fireSelectionHaptic();
-                  setActiveAbstractId(thesis.id);
-                }}
-                pdfUrl={thesis.pdfUrl}
-                scholarUrl={buildGoogleScholarUrl(thesis)}
-                scholarSameTab={installPlatform === "ios" && !isNativePlatform()}
-                onSurfacePointerUp={handlePointerUp(thesis.id)}
-                backgroundImage={canLoadBackgroundImages ? backgroundImages[thesis.id]?.imageUrl : null}
-                backgroundMeta={canLoadBackgroundImages ? backgroundImages[thesis.id] : null}
-              />
-              {heartBursts
-                .filter((burst) => burst.thesisId === thesis.id)
-                .map((burst) => (
-                  <div
-                    key={burst.key}
-                    className="heart-burst"
-                    style={{ left: `${burst.x}px`, top: `${burst.y}px` }}
-                    aria-hidden="true"
-                  >
-                    <HeartIcon filled />
-                  </div>
-                ))}
+              {slide.kind === "thesis" ? (
+                <>
+                  <ThesisCard
+                    t={t}
+                    thesis={slide.thesis}
+                    liked={likedIds.includes(slide.thesis.id)}
+                    onToggleLike={() => toggleLike(slide.thesis)}
+                    onOpenAbstract={() => {
+                      fireSelectionHaptic();
+                      setActiveAbstractId(slide.thesis.id);
+                    }}
+                    pdfUrl={slide.thesis.pdfUrl}
+                    scholarUrl={buildGoogleScholarUrl(slide.thesis)}
+                    scholarSameTab={installPlatform === "ios" && !isNativePlatform()}
+                    onSurfacePointerUp={handlePointerUp(slide.thesis.id)}
+                    backgroundImage={canLoadBackgroundImages ? backgroundImages[slide.thesis.id]?.imageUrl : null}
+                    backgroundMeta={canLoadBackgroundImages ? backgroundImages[slide.thesis.id] : null}
+                  />
+                  {heartBursts
+                    .filter((burst) => burst.thesisId === slide.thesis.id)
+                    .map((burst) => (
+                      <div
+                        key={burst.key}
+                        className="heart-burst"
+                        style={{ left: `${burst.x}px`, top: `${burst.y}px` }}
+                        aria-hidden="true"
+                      >
+                        <HeartIcon filled />
+                      </div>
+                    ))}
+                </>
+              ) : (
+                <SupportSlide
+                  t={t}
+                  onContinue={(event) => {
+                    fireSelectionHaptic();
+                    scrollToNextSlide(event.currentTarget);
+                  }}
+                />
+              )}
             </section>
           ))}
 

@@ -232,6 +232,19 @@ select {
     pointer-events: none;
 }
 
+.support-screen {
+    background:
+        radial-gradient(circle at top left, rgba(255, 45, 85, 0.22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(255, 122, 149, 0.18), transparent 32%),
+        linear-gradient(180deg, color-mix(in srgb, var(--screen-bg) 96%, var(--accent-soft)), var(--screen-bg));
+}
+
+.support-screen::before {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.18)),
+        linear-gradient(180deg, var(--overlay-top), var(--overlay-bottom));
+}
+
 .screen-atmosphere,
 .screen-grid {
     position: absolute;
@@ -328,6 +341,53 @@ select {
     display: grid;
     gap: 0.9rem;
     padding: 0 1.1rem 6rem;
+}
+
+.support-main {
+    min-height: 62svh;
+    max-width: 42rem;
+}
+
+.support-pill {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.support-copy {
+    margin: 0;
+    max-width: 34rem;
+    color: color-mix(in srgb, var(--paper) 88%, transparent);
+    font-size: 1rem;
+    line-height: 1.65;
+    text-wrap: pretty;
+}
+
+.support-bottom {
+    gap: 1rem;
+}
+
+.support-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.support-button {
+    min-height: 3.25rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: 999px;
+    border: 1px solid var(--screen-border);
+    background: var(--glass);
+    color: var(--paper);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+}
+
+.support-button-primary {
+    background: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 80%, transparent);
+    color: #ffffff;
 }
 
 .background-credit {
@@ -944,6 +1004,15 @@ select {
         padding-bottom: max(6rem, calc(1.25rem + env(safe-area-inset-bottom)));
     }
 
+    .support-main {
+        min-height: 56svh;
+    }
+
+    .support-copy {
+        font-size: 0.95rem;
+        line-height: 1.55;
+    }
+
     .screen-side-actions {
         right: 0.85rem;
         bottom: 12.5rem;
@@ -1070,6 +1139,25 @@ select {
     .screen-bottom {
         gap: 0.7rem;
         padding: 0 0.9rem max(5.4rem, calc(1rem + env(safe-area-inset-bottom)));
+    }
+
+    .support-main {
+        padding-bottom: 12rem;
+    }
+
+    .support-copy {
+        font-size: 0.92rem;
+        line-height: 1.52;
+    }
+
+    .support-actions {
+        gap: 0.6rem;
+    }
+
+    .support-button {
+        min-height: 3rem;
+        padding: 0.78rem 1rem;
+        font-size: 0.92rem;
     }
 
     .screen-side-actions {

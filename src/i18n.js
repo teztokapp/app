@@ -160,6 +160,14 @@ const translations = {
       remove: "Beğeniden kaldır",
       googleScholar: "Google Scholar'da ara",
     },
+    support: {
+      badge: "Destek",
+      kicker: "TezTok'u faydalı buluyorsan",
+      title: "Bizi destekle!",
+      body: "Bu uygulamayı ayakta tutmak için ara sıra desteğe ihtiyacımız oluyor. Küçük bir katkı bile yeni özellikler ve daha stabil veri kaynakları demek.",
+      primaryAction: "Destek ol",
+      secondaryAction: "Devam et",
+    },
     thesis: {
       readAbstract: "Özeti oku",
       noItems: "Şu anda gösterilecek tez yok.",
@@ -330,6 +338,14 @@ const translations = {
       emptyTitle: "Double tap to save a thesis.",
       remove: "Remove from likes",
       googleScholar: "Search on Google Scholar",
+    },
+    support: {
+      badge: "Support",
+      kicker: "If TezTok has been useful to you",
+      title: "Support us!",
+      body: "Keeping the app alive takes ongoing work. Even a small contribution helps fund new features and more reliable data sources.",
+      primaryAction: "Support",
+      secondaryAction: "Keep browsing",
     },
     thesis: {
       readAbstract: "Read abstract",
