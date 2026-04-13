@@ -72,6 +72,7 @@ const translations = {
     tabs: {
       feed: "Akış",
       likes: "Beğeniler",
+      search: "Ara",
       settings: "Ayarlar",
     },
     install: {
@@ -159,6 +160,38 @@ const translations = {
       emptyTitle: "Bir tezi kaydetmek için iki kez dokun.",
       remove: "Beğeniden kaldır",
       googleScholar: "Google Scholar'da ara",
+    },
+    search: {
+      emptyKicker: "Detaylı makale araması",
+      emptyTitle: "Anahtar kelime, başlık, yazar, kaynak veya yıl ile arama yap.",
+      resultsKicker: "Arama sonuçları",
+      resultCount: "{count} sonuç",
+      submit: "Makaleleri ara",
+      searching: "Aranıyor...",
+      noResults: "Bu filtrelerle eşleşen makale bulunamadı.",
+      loadError: "Arama sonuçları yüklenemedi.",
+      noAuthor: "Yazar bilgisi yok",
+      fields: {
+        query: "Genel arama",
+        title: "Başlık",
+        author: "Yazar",
+        source: "Kaynak / dergi",
+        year: "Yıl",
+      },
+      placeholders: {
+        query: "ör. large language models",
+        title: "Başlıkta ara",
+        author: "Yazar adı",
+        source: "Dergi veya yayın adı",
+        year: "2024",
+      },
+      actions: {
+        save: "Kaydet",
+        saved: "Kaydedildi",
+        abstract: "Özet",
+        pdf: "PDF",
+        open: "Aç",
+      },
     },
     support: {
       badge: "Destek",
@@ -250,6 +283,7 @@ const translations = {
     tabs: {
       feed: "Feed",
       likes: "Likes",
+      search: "Search",
       settings: "Settings",
     },
     install: {
@@ -338,6 +372,38 @@ const translations = {
       emptyTitle: "Double tap to save a thesis.",
       remove: "Remove from likes",
       googleScholar: "Search on Google Scholar",
+    },
+    search: {
+      emptyKicker: "Detailed article search",
+      emptyTitle: "Search by keyword, title, author, source, or year.",
+      resultsKicker: "Search results",
+      resultCount: "{count} results",
+      submit: "Search articles",
+      searching: "Searching...",
+      noResults: "No articles matched these filters.",
+      loadError: "Search results could not be loaded.",
+      noAuthor: "No author listed",
+      fields: {
+        query: "General query",
+        title: "Title",
+        author: "Author",
+        source: "Source / journal",
+        year: "Year",
+      },
+      placeholders: {
+        query: "e.g. large language models",
+        title: "Search in title",
+        author: "Author name",
+        source: "Journal or publisher",
+        year: "2024",
+      },
+      actions: {
+        save: "Save",
+        saved: "Saved",
+        abstract: "Abstract",
+        pdf: "PDF",
+        open: "Open",
+      },
     },
     support: {
       badge: "Support",

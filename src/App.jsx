@@ -16,6 +16,7 @@ import {
   fetchFeedPage,
   getBackendOptions,
   getBackendMetadata,
+  searchArticles,
   sanitizeBackendSelection,
 } from "./api.js";
 import { createTranslator, DEFAULT_LOCALE, LOCALE_OPTIONS } from "./i18n.js";
@@ -252,6 +253,28 @@ function BookIcon() {
   );
 }
 
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="tab-icon">
+      <circle
+        cx="11"
+        cy="11"
+        r="6.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="m16 16 4 4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="tab-icon">
@@ -279,6 +302,10 @@ function TabIcon({ icon, active }) {
 
   if (icon === "book") {
     return <BookIcon />;
+  }
+
+  if (icon === "search") {
+    return <SearchIcon />;
   }
 
   if (icon === "settings") {
@@ -815,6 +842,192 @@ function LikedThesisList({ items, onOpenFeed, onRemoveLike, t }) {
   );
 }
 
+function SearchResultList({
+  items,
+  loading,
+  error,
+  emptyMessage,
+  open,
+  onClose,
+  searchValues,
+  onSearchValueChange,
+  onSubmit,
+  onToggleLike,
+  likedIds,
+  onOpenAbstract,
+  t,
+}) {
+  const hasSearched = Object.values(searchValues).some((value) => String(value ?? "").trim());
+
+  return (
+    <section className="likes-list-screen search-screen">
+      <div className="search-shell">
+        <form
+          className="search-form-card"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
+          <div className="search-form-grid">
+            <label className="search-field">
+              <span>{t("search.fields.query")}</span>
+              <input
+                type="search"
+                value={searchValues.query}
+                onChange={(event) => onSearchValueChange("query", event.target.value)}
+                placeholder={t("search.placeholders.query")}
+              />
+            </label>
+            <label className="search-field">
+              <span>{t("search.fields.title")}</span>
+              <input
+                type="search"
+                value={searchValues.title}
+                onChange={(event) => onSearchValueChange("title", event.target.value)}
+                placeholder={t("search.placeholders.title")}
+              />
+            </label>
+            <label className="search-field">
+              <span>{t("search.fields.author")}</span>
+              <input
+                type="search"
+                value={searchValues.author}
+                onChange={(event) => onSearchValueChange("author", event.target.value)}
+                placeholder={t("search.placeholders.author")}
+              />
+            </label>
+            <label className="search-field">
+              <span>{t("search.fields.source")}</span>
+              <input
+                type="search"
+                value={searchValues.source}
+                onChange={(event) => onSearchValueChange("source", event.target.value)}
+                placeholder={t("search.placeholders.source")}
+              />
+            </label>
+            <label className="search-field">
+              <span>{t("search.fields.year")}</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="1900"
+                max={new Date().getFullYear() + 1}
+                value={searchValues.year}
+                onChange={(event) => onSearchValueChange("year", event.target.value)}
+                placeholder={t("search.placeholders.year")}
+              />
+            </label>
+          </div>
+          <button type="submit" className="search-submit">
+            {loading ? t("search.searching") : t("search.submit")}
+          </button>
+        </form>
+      </div>
+
+      {open ? (
+        <div className="sheet-backdrop picker-backdrop" onClick={onClose} aria-hidden="true">
+          <section
+            className="discipline-picker search-results-modal"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("search.resultsKicker")}
+          >
+            <div className="sheet-handle" />
+            <div className="picker-header">
+              <div>
+                <p className="info-kicker">{t("search.resultsKicker")}</p>
+                <h3>{items.length > 0 ? t("search.resultCount", { count: items.length }) : emptyMessage}</h3>
+              </div>
+              <button type="button" className="sheet-close" onClick={onClose}>
+                {t("picker.done")}
+              </button>
+            </div>
+
+            {error ? <p className="search-error">{error}</p> : null}
+
+            {items.length > 0 ? (
+              <div className="likes-list search-results-list">
+                {items.map((item) => {
+                  const hasAbstract = Boolean(String(item.abstract ?? "").trim());
+                  const hasPdf = Boolean(String(item.pdfUrl ?? "").trim());
+                  const hasDetail = Boolean(String(item.detailPageUrl ?? "").trim());
+
+                  return (
+                    <article key={item.id} className="liked-item search-result-item">
+                      <div className="liked-item-open">
+                        <div className="liked-item-meta">
+                          <span>{item.year}</span>
+                          <span>{item.author || t("search.noAuthor")}</span>
+                        </div>
+                        <h3>{item.title}</h3>
+                        <p>{item.university}</p>
+                        <p className="search-result-department">{item.department}</p>
+                        {hasAbstract ? (
+                          <p className="search-result-abstract">{previewAbstract(item.abstract, false)}</p>
+                        ) : null}
+                      </div>
+                      <div className="search-result-actions">
+                        <button
+                          type="button"
+                          className={likedIds.includes(item.id) ? "liked-item-remove active-text" : "liked-item-remove"}
+                          onClick={() => onToggleLike(item)}
+                        >
+                          {likedIds.includes(item.id) ? t("search.actions.saved") : t("search.actions.save")}
+                        </button>
+                        {hasAbstract ? (
+                          <button
+                            type="button"
+                            className="liked-item-remove"
+                            onClick={() => onOpenAbstract(item.id)}
+                          >
+                            {t("search.actions.abstract")}
+                          </button>
+                        ) : null}
+                        {hasPdf ? (
+                          <a
+                            className="liked-item-remove"
+                            href={item.pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {t("search.actions.pdf")}
+                          </a>
+                        ) : null}
+                        {hasDetail ? (
+                          <a
+                            className="liked-item-remove"
+                            href={item.detailPageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {t("search.actions.open")}
+                          </a>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="empty-copy empty-likes search-empty">
+                <div className="empty-face" aria-hidden="true">
+                  ?
+                </div>
+                <p className="info-kicker">
+                  {hasSearched ? t("search.resultsKicker") : t("search.emptyKicker")}
+                </p>
+                <h3>{hasSearched ? emptyMessage : t("search.emptyTitle")}</h3>
+              </div>
+            )}
+          </section>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function ThesisCard({
   t,
   thesis,
@@ -967,6 +1180,18 @@ export default function App() {
   const [feed, setFeed] = useState([]);
   const [cursor, setCursor] = useState(0);
   const [activeTab, setActiveTab] = useState("feed");
+  const [searchValues, setSearchValues] = useState(() => ({
+    query: "",
+    title: "",
+    author: "",
+    source: "",
+    year: "",
+  }));
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [searchEmptyMessage, setSearchEmptyMessage] = useState("");
+  const [searchResultsOpen, setSearchResultsOpen] = useState(false);
   const [disciplineOptions, setDisciplineOptions] = useState([
     {
       id: "all",
@@ -1022,8 +1247,9 @@ export default function App() {
   const tapTrackerRef = useRef({ id: null, time: 0, x: 0, y: 0 });
   const feedRef = useRef(null);
   const likesRef = useRef(null);
+  const searchRef = useRef(null);
   const settingsRef = useRef(null);
-  const scrollPositionsRef = useRef({ feed: 0, likes: 0, settings: 0 });
+  const scrollPositionsRef = useRef({ feed: 0, likes: 0, search: 0, settings: 0 });
   const apiConfig = {
     backend,
     customApiBaseUrl: yoktezServerUrl,
@@ -1131,6 +1357,7 @@ export default function App() {
   const tabs = [
     { id: "feed", label: t("tabs.feed"), icon: "home" },
     { id: "likes", label: t("tabs.likes"), icon: "heart" },
+    { id: "search", label: t("tabs.search"), icon: "search" },
     { id: "settings", label: t("tabs.settings"), icon: "settings", badge: canShowInstallPrompt },
   ];
   const themeOptions = [
@@ -1579,6 +1806,11 @@ export default function App() {
   const visibleFeed = activeTab === "likes" ? likedFeed : feed;
   const feedSlides =
     activeTab === "feed" ? buildFeedSlides(visibleFeed) : [];
+  const activeAbstractThesis =
+    feed.find((item) => item.id === activeAbstractId) ??
+    likedFeed.find((item) => item.id === activeAbstractId) ??
+    searchResults.find((item) => item.id === activeAbstractId) ??
+    null;
 
   useEffect(() => {
     const currentContainer =
@@ -1586,7 +1818,9 @@ export default function App() {
         ? feedRef.current
         : activeTab === "likes"
           ? likesRef.current
-          : settingsRef.current;
+          : activeTab === "search"
+            ? searchRef.current
+            : settingsRef.current;
 
     window.requestAnimationFrame(() => {
       currentContainer?.scrollTo({
@@ -1602,7 +1836,9 @@ export default function App() {
         ? feedRef.current
         : activeTab === "likes"
           ? likesRef.current
-          : settingsRef.current;
+          : activeTab === "search"
+            ? searchRef.current
+            : settingsRef.current;
 
     if (currentContainer) {
       scrollPositionsRef.current[activeTab] = currentContainer.scrollTop;
@@ -1626,6 +1862,55 @@ export default function App() {
     setPendingOpenThesisId(id);
     setActiveDisciplineId("all");
     setActiveTab("feed");
+  }
+
+  function updateSearchValue(key, value) {
+    setSearchValues((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  async function runSearch() {
+    try {
+      setSearchLoading(true);
+      setSearchError("");
+      setSearchEmptyMessage("");
+      scrollPositionsRef.current.search = 0;
+      searchRef.current?.scrollTo({ top: 0, behavior: "auto" });
+
+      const trimmedValues = Object.fromEntries(
+        Object.entries(searchValues).map(([key, value]) => [key, String(value ?? "").trim()]),
+      );
+      const hasAnyCriteria = Object.values(trimmedValues).some(Boolean);
+
+      if (!hasAnyCriteria) {
+        setSearchResults([]);
+        setSearchEmptyMessage(t("search.emptyTitle"));
+        setSearchResultsOpen(true);
+        return;
+      }
+
+      const data = await searchArticles({
+        ...trimmedValues,
+        year: trimmedValues.year || undefined,
+        limit: 20,
+      }, apiConfig);
+
+      const items = dedupeThesesById(data.items ?? []);
+      setSearchResults(items);
+      setSearchResultsOpen(true);
+      if (items.length === 0) {
+        setSearchEmptyMessage(t("search.noResults"));
+      }
+    } catch (error) {
+      setSearchResults([]);
+      setSearchError(error.message);
+      setSearchEmptyMessage(t("search.loadError"));
+      setSearchResultsOpen(true);
+    } finally {
+      setSearchLoading(false);
+    }
   }
 
   function scrollToNextSlide(currentTarget) {
@@ -1733,27 +2018,29 @@ export default function App() {
         <div className="header-brand">
           <h2>{t("app.title")}</h2>
         </div>
-        <div className="header-actions">
-          <button
-            type="button"
-            className="topic-select"
-            onClick={() => {
-              fireSelectionHaptic();
-              setSettingsPicker("year");
-            }}
-            aria-label={t("picker.filterBy", { label: t("settings.year") })}
-          >
-            <span>{year === "all" ? t("settings.year") : year}</span>
-          </button>
-          <button
-            type="button"
-            className="topic-select"
-            onClick={handleOpenDisciplinePicker}
-            aria-label={t("picker.filterBy", { label: backendMeta.filterLabel })}
-          >
-            <span>{activeDisciplineOption?.label ?? backendMeta.allFilterLabel}</span>
-          </button>
-        </div>
+        {activeTab === "feed" ? (
+          <div className="header-actions">
+            <button
+              type="button"
+              className="topic-select"
+              onClick={() => {
+                fireSelectionHaptic();
+                setSettingsPicker("year");
+              }}
+              aria-label={t("picker.filterBy", { label: t("settings.year") })}
+            >
+              <span>{year === "all" ? t("settings.year") : year}</span>
+            </button>
+            <button
+              type="button"
+              className="topic-select"
+              onClick={handleOpenDisciplinePicker}
+              aria-label={t("picker.filterBy", { label: backendMeta.filterLabel })}
+            >
+              <span>{activeDisciplineOption?.label ?? backendMeta.allFilterLabel}</span>
+            </button>
+          </div>
+        ) : null}
       </header>
 
       {!isOnline ? <div className="offline-banner">{t("app.offlineReady")}</div> : null}
@@ -1813,6 +2100,36 @@ export default function App() {
             items={likedFeed}
             onOpenFeed={openLikedItem}
             onRemoveLike={toggleLike}
+          />
+        </div>
+      ) : activeTab === "search" ? (
+        <div
+          ref={searchRef}
+          className="tab-scroll"
+          onScroll={() => {
+            scrollPositionsRef.current.search = searchRef.current?.scrollTop ?? 0;
+          }}
+        >
+          <SearchResultList
+            t={t}
+            items={searchResults}
+            loading={searchLoading}
+            error={searchError}
+            emptyMessage={searchEmptyMessage || t("search.noResults")}
+            open={searchResultsOpen}
+            onClose={() => setSearchResultsOpen(false)}
+            searchValues={searchValues}
+            onSearchValueChange={updateSearchValue}
+            onSubmit={() => {
+              fireSelectionHaptic();
+              void runSearch();
+            }}
+            onToggleLike={toggleLike}
+            likedIds={likedIds}
+            onOpenAbstract={(id) => {
+              fireSelectionHaptic();
+              setActiveAbstractId(id);
+            }}
           />
         </div>
       ) : (
@@ -1943,8 +2260,8 @@ export default function App() {
       />
       <AbstractSheet
         t={t}
-        thesis={feed.find((item) => item.id === activeAbstractId)}
-        open={Boolean(activeAbstractId)}
+        thesis={activeAbstractThesis}
+        open={Boolean(activeAbstractThesis)}
         onClose={() => setActiveAbstractId(null)}
       />
       <WheelPickerSheet

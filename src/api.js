@@ -446,6 +446,217 @@ function buildHeaders(extraHeaders = {}) {
   );
 }
 
+function buildSearchTerms(criteria = {}) {
+  return [
+    normalizeWhitespace(criteria.query),
+    normalizeWhitespace(criteria.title),
+    normalizeWhitespace(criteria.author),
+    normalizeWhitespace(criteria.source),
+  ].filter(Boolean);
+}
+
+async function requestOpenAlexSearch(criteria = {}, config = {}) {
+  const url = new URL(OPENALEX_API_URL);
+  const limit = Math.min(Math.max(Number(criteria.limit) || 20, 1), 50);
+  const searchTerms = buildSearchTerms(criteria);
+
+  url.searchParams.set("per-page", String(limit));
+  url.searchParams.set("sort", "relevance_score:desc");
+
+  if (searchTerms.length > 0) {
+    url.searchParams.set("search", searchTerms.join(" "));
+  }
+
+  const filters = [];
+  if (normalizeWhitespace(criteria.title)) {
+    filters.push(`title.search:${normalizeWhitespace(criteria.title)}`);
+  }
+  if (config.contentLang === "english") {
+    filters.push("language:en");
+  }
+
+  const year = criteria.year ?? config.year;
+  if (year && year !== "all") {
+    filters.push(`publication_year:${year}`);
+  }
+
+  if (filters.length > 0) {
+    url.searchParams.set("filter", filters.join(","));
+  }
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    throw new Error(`OpenAlex search failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const queryAuthor = normalizeWhitespace(criteria.author).toLocaleLowerCase("en");
+  const querySource = normalizeWhitespace(criteria.source).toLocaleLowerCase("en");
+
+  const items = (data.results ?? [])
+    .filter((item) => item.type !== "dataset")
+    .map((item) => {
+      const authors = (item.authorships ?? [])
+        .map((authorship) => authorship.author?.display_name)
+        .filter(Boolean);
+      const primaryLocation = item.best_oa_location ?? item.primary_location ?? {};
+      const primaryTopic = item.primary_topic;
+      const venue = normalizeWhitespace(
+        primaryLocation.source?.display_name ??
+        primaryLocation.landing_page_url ??
+        "OpenAlex",
+      ) || "OpenAlex";
+
+      return {
+        id: item.id ?? item.ids?.openalex ?? item.doi ?? item.display_name,
+        title: normalizeTitle(item.display_name ?? item.title ?? ""),
+        abstract: normalizeAbstract(rebuildOpenAlexAbstract(item.abstract_inverted_index)),
+        author: buildAuthorLabel(authors),
+        university: venue,
+        department:
+          normalizeWhitespace(
+            primaryTopic?.field?.display_name ??
+            primaryTopic?.subfield?.display_name ??
+            primaryTopic?.display_name ??
+            item.type,
+          ) || "OpenAlex",
+        year: resolveYear(
+          item.publication_year,
+          item.publication_date,
+          item.updated_date,
+          item.created_date,
+        ),
+        pdfUrl: normalizePdfUrl(primaryLocation.pdf_url ?? item.open_access?.oa_url ?? "", {
+          requirePdfLikePath: false,
+        }),
+        detailPageUrl: primaryLocation.landing_page_url ?? item.id ?? "",
+        keywords: pickKeywords([
+          ...(item.keywords ?? []).map((keyword) => keyword.display_name),
+          ...(item.topics ?? []).map((topic) => topic.display_name),
+          ...(item.concepts ?? []).map((concept) => concept.display_name),
+        ]),
+      };
+    })
+    .filter((item) =>
+      !queryAuthor || item.author.toLocaleLowerCase("en").includes(queryAuthor),
+    )
+    .filter((item) =>
+      !querySource || item.university.toLocaleLowerCase("en").includes(querySource),
+    );
+
+  return { items };
+}
+
+async function requestCrossrefSearch(criteria = {}, config = {}) {
+  const url = new URL(CROSSREF_API_URL);
+  const requestedRows = Math.min(Math.max(Number(criteria.limit) || 20, 1), 50);
+  const effectiveRows =
+    config.contentLang === "english"
+      ? Math.min(Math.max(requestedRows * 3, requestedRows), 50)
+      : requestedRows;
+
+  url.searchParams.set("rows", String(effectiveRows));
+  url.searchParams.set("sort", "relevance");
+  url.searchParams.set("order", "desc");
+
+  if (normalizeWhitespace(criteria.query)) {
+    url.searchParams.set("query.bibliographic", normalizeWhitespace(criteria.query));
+  }
+  if (normalizeWhitespace(criteria.title)) {
+    url.searchParams.set("query.title", normalizeWhitespace(criteria.title));
+  }
+  if (normalizeWhitespace(criteria.author)) {
+    url.searchParams.set("query.author", normalizeWhitespace(criteria.author));
+  }
+  if (normalizeWhitespace(criteria.source)) {
+    url.searchParams.set("query.container-title", normalizeWhitespace(criteria.source));
+  }
+
+  const filters = [];
+  const year = criteria.year ?? config.year;
+  if (year && year !== "all") {
+    filters.push(`from-pub-date:${year}-01-01,until-pub-date:${year}-12-31`);
+  }
+
+  if (filters.length > 0) {
+    url.searchParams.set("filter", filters.join(","));
+  }
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Crossref search failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const items = (data.message?.items ?? [])
+    .filter((item) => (config.contentLang === "english" ? item.language === "en" : true))
+    .slice(0, requestedRows)
+    .map((item) => {
+      const authors = (item.author ?? [])
+        .map((author) =>
+          normalizeWhitespace([author.given, author.family].filter(Boolean).join(" ")),
+        )
+        .filter(Boolean);
+      const links = item.link ?? [];
+      const pdfUrl =
+        links.find((link) => String(link["content-type"] ?? "").includes("pdf"))?.URL ?? "";
+      const title = normalizeWhitespace((item.title ?? [])[0] ?? "");
+      const abstract = stripHtml(item.abstract ?? "");
+      const subjects = pickKeywords([
+        ...(item.subject ?? []),
+        item.type,
+        ...(item["container-title"] ?? []),
+      ]);
+
+      return {
+        id: item.DOI ?? item.URL ?? title,
+        title: normalizeTitle(title),
+        abstract,
+        author: buildAuthorLabel(authors),
+        university:
+          normalizeWhitespace((item["container-title"] ?? [])[0] ?? item.publisher ?? "Crossref") ||
+          "Crossref",
+        department:
+          normalizeWhitespace((item.subject ?? [])[0] || humanizeTypeLabel(item.type) || "Crossref") ||
+          "Crossref",
+        year: resolveYear(
+          item.issued?.["date-parts"]?.[0]?.[0],
+          item.published?.["date-parts"]?.[0]?.[0],
+          item.created?.["date-time"],
+          item.indexed?.["date-time"],
+        ),
+        pdfUrl: normalizePdfUrl(pdfUrl),
+        detailPageUrl: item.URL ?? item.resource?.primary?.URL ?? "",
+        keywords: subjects,
+      };
+    });
+
+  return { items };
+}
+
+async function requestYoktezSearch(criteria = {}, config = {}) {
+  const year = criteria.year ?? config.year;
+
+  const data = await requestJson("/api/search", {
+    q: criteria.query,
+    title: criteria.title,
+    author: criteria.author,
+    source: criteria.source,
+    year: year === "all" ? undefined : year,
+    limit: criteria.limit ?? 20,
+  }, config);
+
+  return {
+    items: dedupeItemsById(data.items ?? []),
+  };
+}
+
 
 
 async function requestOpenAlexFeed({ page = 1, perPage = 4, filterId = "all", contentLang = "all", year = null } = {}) {
@@ -958,4 +1169,16 @@ export function fetchBackgroundImage({ title, keywords }, config) {
     title,
     keywords: keywords.join(","),
   }, config);
+}
+
+export function searchArticles(criteria, config) {
+  if (config?.backend === BACKEND_OPENALEX) {
+    return requestOpenAlexSearch(criteria, config);
+  }
+
+  if (config?.backend === BACKEND_CROSSREF) {
+    return requestCrossrefSearch(criteria, config);
+  }
+
+  return requestYoktezSearch(criteria, config);
 }
