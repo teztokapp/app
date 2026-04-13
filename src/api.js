@@ -469,12 +469,10 @@ async function requestCrossrefFeed({ offset = 0, rows = 4, filterId = "all", con
   const url = new URL(CROSSREF_API_URL);
   url.searchParams.set("rows", String(rows));
   url.searchParams.set("offset", String(offset));
-  // Remove deterministic sort so results vary
-  url.searchParams.set("sort", "relevance");
-  url.searchParams.set("order", "desc");
-
   if (filter.query) {
     url.searchParams.set("query", filter.query);
+    url.searchParams.set("sort", "relevance");
+    url.searchParams.set("order", "desc");
   }
 
   const filters = [];
