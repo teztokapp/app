@@ -116,6 +116,7 @@ const normalizePickerText = (value = "") =>
 const OFFLINE_CACHE_VERSION = "v2";
 const SUPPORT_SLIDE_GAPS = [10, 20];
 const SUPPORT_URL = String(import.meta.env.VITE_SUPPORT_URL ?? "").trim();
+const MAX_BACKGROUND_IMAGE_CACHE_ITEMS = 24;
 
 const readCachedValue = (key, fallback) => {
   try {
@@ -129,7 +130,47 @@ const readCachedValue = (key, fallback) => {
 const writeCachedValue = (key, value) => {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+  } catch (error) {
+    if (error?.name !== "QuotaExceededError") {
+      return;
+    }
+
+    try {
+      const removableKeys = [];
+
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const storageKey = window.localStorage.key(index);
+
+        if (storageKey?.startsWith("teztok-cache:")) {
+          removableKeys.push(storageKey);
+        }
+      }
+
+      removableKeys.forEach((storageKey) => {
+        window.localStorage.removeItem(storageKey);
+      });
+
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+  }
+};
+
+const writePreferenceValue = (key, value) => {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    writeCachedValue(key, value);
+  }
+};
+
+const trimBackgroundImagesCache = (items) => {
+  const entries = Object.entries(items ?? {});
+
+  if (entries.length <= MAX_BACKGROUND_IMAGE_CACHE_ITEMS) {
+    return items;
+  }
+
+  return Object.fromEntries(entries.slice(-MAX_BACKGROUND_IMAGE_CACHE_ITEMS));
 };
 
 const buildOfflineScope = ({
@@ -1291,56 +1332,56 @@ export default function App() {
   const allFeedCacheKey = getFeedCacheKey(offlineScope, `${feedMode}:all`);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-liked", JSON.stringify(likedIds));
+    writeCachedValue("teztok-liked", likedIds);
   }, [likedIds]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-liked-items", JSON.stringify(likedItems));
+    writeCachedValue("teztok-liked-items", likedItems);
   }, [likedItems]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-default-discipline", defaultDisciplineId);
+    writePreferenceValue("teztok-default-discipline", defaultDisciplineId);
   }, [defaultDisciplineId]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-locale", locale);
+    writePreferenceValue("teztok-locale", locale);
   }, [locale]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-backend", backend);
+    writePreferenceValue("teztok-backend", backend);
   }, [backend]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-yoktez-server-url", yoktezServerUrl);
+    writePreferenceValue("teztok-yoktez-server-url", yoktezServerUrl);
   }, [yoktezServerUrl]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-background-server-url", backgroundServerUrl);
+    writePreferenceValue("teztok-background-server-url", backgroundServerUrl);
   }, [backgroundServerUrl]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-theme", theme);
+    writePreferenceValue("teztok-theme", theme);
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-feed-mode", feedMode);
+    writePreferenceValue("teztok-feed-mode", feedMode);
   }, [feedMode]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-haptics", hapticsMode);
+    writePreferenceValue("teztok-haptics", hapticsMode);
   }, [hapticsMode]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-background-images", backgroundImagesMode);
+    writePreferenceValue("teztok-background-images", backgroundImagesMode);
   }, [backgroundImagesMode]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-content-lang", contentLang);
+    writePreferenceValue("teztok-content-lang", contentLang);
   }, [contentLang]);
 
   useEffect(() => {
-    window.localStorage.setItem("teztok-year", year);
+    writePreferenceValue("teztok-year", year);
   }, [year]);
 
   useEffect(() => {
@@ -1348,7 +1389,10 @@ export default function App() {
   }, [offlineScope]);
 
   useEffect(() => {
-    writeCachedValue(getBackgroundImagesCacheKey(offlineScope), backgroundImages);
+    writeCachedValue(
+      getBackgroundImagesCacheKey(offlineScope),
+      trimBackgroundImagesCache(backgroundImages),
+    );
   }, [backgroundImages, offlineScope]);
 
   useEffect(() => {
