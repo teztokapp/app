@@ -119,9 +119,16 @@ const translations = {
       },
     },
     settings: {
+      sections: {
+        general: "Genel",
+        appearance: "Görünüm",
+        sources: "Kaynaklar",
+        about: "Hakkında",
+      },
       source: "Kaynak",
       language: "Dil",
       languageTitle: "Dil",
+      back: "Geri",
       contentLanguage: "İçerik dili",
       aboutTitle: "Hakkında",
       aboutAction: "Aç",
@@ -361,9 +368,16 @@ const translations = {
       },
     },
     settings: {
+      sections: {
+        general: "General",
+        appearance: "Appearance",
+        sources: "Sources",
+        about: "About",
+      },
       source: "Source",
       language: "Language",
       languageTitle: "Language",
+      back: "Back",
       contentLanguage: "Content language",
       aboutTitle: "About",
       aboutAction: "Open",

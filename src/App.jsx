@@ -528,20 +528,35 @@ function SettingsSelectRow({
   indicator,
   valueAsBadge = false,
 }) {
+  const hasValue = Boolean(value);
+
   return (
     <div className="info-row">
-      <div className="settings-label-row">
-        <p>{label}</p>
-        {indicator ? <span className="settings-indicator">{indicator}</span> : null}
-      </div>
-      <button
-        type="button"
-        className="settings-select"
-        onClick={onOpen}
-      >
-        <span className={valueAsBadge ? "settings-value-badge" : undefined}>{value}</span>
-        <ChevronIcon />
-      </button>
+      {hasValue ? (
+        <>
+          <div className="settings-label-row">
+            <p>{label}</p>
+            {indicator ? <span className="settings-indicator">{indicator}</span> : null}
+          </div>
+          <button
+            type="button"
+            className="settings-select"
+            onClick={onOpen}
+          >
+            <span className={valueAsBadge ? "settings-value-badge" : undefined}>{value}</span>
+            <ChevronIcon />
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="settings-select settings-select-inline"
+          onClick={onOpen}
+        >
+          <span>{label}</span>
+          <ChevronIcon />
+        </button>
+      )}
       {helper ? <span>{helper}</span> : null}
     </div>
   );
@@ -637,6 +652,27 @@ function InstallSettingsRow({ t, installPlatform, onInstallApp }) {
   );
 }
 
+function SettingsSection({ title, children, hideTitle = false }) {
+  return (
+    <section className="settings-section">
+      {!hideTitle ? <p className="settings-section-title">{title}</p> : null}
+      <div className="settings-section-body">{children}</div>
+    </section>
+  );
+}
+
+function SettingsPageHeader({ title, onBack, t }) {
+  return (
+    <div className="settings-page-header">
+      <button type="button" className="settings-back-button" onClick={onBack}>
+        <ChevronIcon />
+        <span>{t("settings.back")}</span>
+      </button>
+      <h3>{title}</h3>
+    </div>
+  );
+}
+
 function SupportSlide({ t, onContinue }) {
   const hasSupportUrl = Boolean(SUPPORT_URL);
 
@@ -681,6 +717,19 @@ function SupportSlide({ t, onContinue }) {
   );
 }
 
+function FeedLoadingState({ t }) {
+  return (
+    <section className="info-screen empty-state feed-loading-state">
+      <div className="feed-loader" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <p className="info-kicker">{t("thesis.loadingKicker")}</p>
+    </section>
+  );
+}
+
 function SettingsScreen({
   t,
   localeOptions,
@@ -710,6 +759,7 @@ function SettingsScreen({
   onInstallApp,
   onOpenAbout,
 }) {
+  const [activeSection, setActiveSection] = useState(null);
   const themeLabel =
     themeOptions.find((option) => option.id === theme)?.label ?? theme;
   const localeLabel =
@@ -728,88 +778,138 @@ function SettingsScreen({
   const yearLabel =
     yearOptions.find((option) => option.id === year)?.label ?? year;
   const showNativeHaptics = isNativePlatform();
+  const settingsSections = [
+    { id: "general", label: t("settings.sections.general") },
+    { id: "appearance", label: t("settings.sections.appearance") },
+    { id: "sources", label: t("settings.sections.sources") },
+    { id: "about", label: t("settings.sections.about") },
+  ];
 
   return (
     <section className="info-screen">
       <div className="info-list">
-        {showInstallPrompt ? (
-          <InstallSettingsRow
-            t={t}
-            installPlatform={installPlatform}
-            onInstallApp={onInstallApp}
-          />
-        ) : null}
-        <SettingsSelectRow
-          label={t("settings.source")}
-          value={backendLabel}
-          helper={
-            backendMeta.clientOnly
-              ? t("settings.sourceClientHelp", { label: backendLabel })
-              : t("settings.sourceServerHelp", { label: backendLabel })
-          }
-          onOpen={() => onOpenSettingsPicker("backend")}
-        />
-        <SettingsSelectRow
-          label={t("settings.language")}
-          value={localeLabel}
-          onOpen={() => onOpenSettingsPicker("locale")}
-        />
-        {backend === BACKEND_YOKTEZ ? (
-          <div className="info-row">
-            <p>{t("settings.yoktezServerUrl")}</p>
-            <input
-              className="settings-input"
-              type="url"
-              inputMode="url"
-              placeholder={t("settings.urlPlaceholder")}
-              value={yoktezServerUrl}
-              onChange={(event) => onYoktezServerUrlChange(event.target.value)}
-            />
-            <span>
-              {t("settings.yoktezServerHelp")}
-            </span>
-          </div>
-        ) : null}
-        <SettingsSelectRow
-          label={t("settings.defaultFilter")}
-          value={defaultDisciplineLabel}
-          onOpen={onOpenDefaultDisciplinePicker}
-        />
-        <SettingsSelectRow
-          label={t("settings.theme")}
-          value={themeLabel}
-          onOpen={() => onOpenSettingsPicker("theme")}
-        />
-        <SettingsSelectRow
-          label={t("settings.feedOrder")}
-          value={feedModeLabel}
-          onOpen={() => onOpenSettingsPicker("feedMode")}
-        />
-        {showNativeHaptics ? (
-          <SettingsSelectRow
-            label={t("settings.haptics")}
-            value={hapticsLabel}
-            onOpen={() => onOpenSettingsPicker("haptics")}
-          />
-        ) : null}
-        {backendMeta.supportsBackgroundImages ? (
-          <SettingsSelectRow
-            label={t("settings.backgroundImages")}
-            value={backgroundImagesLabel}
-            onOpen={() => onOpenSettingsPicker("backgroundImages")}
-          />
-        ) : null}
-        <SettingsSelectRow
-          label={t("settings.contentLanguage")}
-          value={contentLangLabel}
-          onOpen={() => onOpenSettingsPicker("contentLang")}
-        />
-        <SettingsSelectRow
-          label={t("settings.aboutTitle")}
-          value={t("settings.aboutAction")}
-          helper={t("settings.aboutSummary")}
-          onOpen={onOpenAbout}
-        />
+        <div
+          key={activeSection ?? "root"}
+          className="settings-page-transition"
+        >
+          {activeSection ? (
+            <>
+              <SettingsPageHeader
+                title={t(`settings.sections.${activeSection}`)}
+                onBack={() => setActiveSection(null)}
+                t={t}
+              />
+
+              {activeSection === "general" ? (
+                <SettingsSection title={t("settings.sections.general")} hideTitle>
+                  {showInstallPrompt ? (
+                    <InstallSettingsRow
+                      t={t}
+                      installPlatform={installPlatform}
+                      onInstallApp={onInstallApp}
+                    />
+                  ) : null}
+                  <SettingsSelectRow
+                    label={t("settings.language")}
+                    value={localeLabel}
+                    onOpen={() => onOpenSettingsPicker("locale")}
+                  />
+                  <SettingsSelectRow
+                    label={t("settings.defaultFilter")}
+                    value={defaultDisciplineLabel}
+                    onOpen={onOpenDefaultDisciplinePicker}
+                  />
+                  <SettingsSelectRow
+                    label={t("settings.contentLanguage")}
+                    value={contentLangLabel}
+                    onOpen={() => onOpenSettingsPicker("contentLang")}
+                  />
+                </SettingsSection>
+              ) : null}
+
+              {activeSection === "appearance" ? (
+                <SettingsSection title={t("settings.sections.appearance")} hideTitle>
+                  <SettingsSelectRow
+                    label={t("settings.theme")}
+                    value={themeLabel}
+                    onOpen={() => onOpenSettingsPicker("theme")}
+                  />
+                  <SettingsSelectRow
+                    label={t("settings.feedOrder")}
+                    value={feedModeLabel}
+                    onOpen={() => onOpenSettingsPicker("feedMode")}
+                  />
+                  {showNativeHaptics ? (
+                    <SettingsSelectRow
+                      label={t("settings.haptics")}
+                      value={hapticsLabel}
+                      onOpen={() => onOpenSettingsPicker("haptics")}
+                    />
+                  ) : null}
+                  {backendMeta.supportsBackgroundImages ? (
+                    <SettingsSelectRow
+                      label={t("settings.backgroundImages")}
+                      value={backgroundImagesLabel}
+                      onOpen={() => onOpenSettingsPicker("backgroundImages")}
+                    />
+                  ) : null}
+                </SettingsSection>
+              ) : null}
+
+              {activeSection === "sources" ? (
+                <SettingsSection title={t("settings.sections.sources")} hideTitle>
+                  <SettingsSelectRow
+                    label={t("settings.source")}
+                    value={backendLabel}
+                    helper={
+                      backendMeta.clientOnly
+                        ? t("settings.sourceClientHelp", { label: backendLabel })
+                        : t("settings.sourceServerHelp", { label: backendLabel })
+                    }
+                    onOpen={() => onOpenSettingsPicker("backend")}
+                  />
+                  {backend === BACKEND_YOKTEZ ? (
+                    <div className="info-row">
+                      <p>{t("settings.yoktezServerUrl")}</p>
+                      <input
+                        className="settings-input"
+                        type="url"
+                        inputMode="url"
+                        placeholder={t("settings.urlPlaceholder")}
+                        value={yoktezServerUrl}
+                        onChange={(event) => onYoktezServerUrlChange(event.target.value)}
+                      />
+                      <span>
+                        {t("settings.yoktezServerHelp")}
+                      </span>
+                    </div>
+                  ) : null}
+                </SettingsSection>
+              ) : null}
+
+              {activeSection === "about" ? (
+                <SettingsSection title={t("settings.sections.about")} hideTitle>
+                  <SettingsSelectRow
+                    label={t("settings.aboutTitle")}
+                    value=""
+                    onOpen={onOpenAbout}
+                  />
+                </SettingsSection>
+              ) : null}
+            </>
+          ) : (
+            <SettingsSection title={t("tabs.settings")}>
+              {settingsSections.map((section) => (
+                <SettingsSelectRow
+                  key={section.id}
+                  label={section.label}
+                  value=""
+                  onOpen={() => setActiveSection(section.id)}
+                />
+              ))}
+            </SettingsSection>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -1090,170 +1190,158 @@ function SearchResultList({
   return (
     <section className="likes-list-screen search-screen">
       <div className="search-shell">
-        <form
-          className="search-form-card"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit();
-          }}
-        >
-          <div className="search-form-grid">
-            {showGeneralQuery ? (
-              <label className="search-field">
-                <span>{t("search.fields.query")}</span>
-                <input
-                  type="search"
-                  value={searchValues.query}
-                  onChange={(event) => onSearchValueChange("query", event.target.value)}
-                  placeholder={t("search.placeholders.query")}
-                />
-              </label>
-            ) : null}
-            <label className="search-field">
-              <span>{t("search.fields.title")}</span>
-              <input
-                type="search"
-                value={searchValues.title}
-                onChange={(event) => onSearchValueChange("title", event.target.value)}
-                placeholder={t("search.placeholders.title")}
+        <div className="settings-page-transition" key={open ? "results" : "form"}>
+          {open ? (
+            <>
+              <SettingsPageHeader
+                title={t("search.resultsKicker")}
+                onBack={onClose}
+                t={t}
               />
-            </label>
-            <label className="search-field">
-              <span>{t("search.fields.author")}</span>
-              <input
-                type="search"
-                value={searchValues.author}
-                onChange={(event) => onSearchValueChange("author", event.target.value)}
-                placeholder={t("search.placeholders.author")}
-              />
-            </label>
-            <label className="search-field">
-              <span>{t("search.fields.source")}</span>
-              <input
-                type="search"
-                value={searchValues.source}
-                onChange={(event) => onSearchValueChange("source", event.target.value)}
-                placeholder={t("search.placeholders.source")}
-              />
-            </label>
-            <label className="search-field">
-              <span>{t("search.fields.year")}</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="1900"
-                max={new Date().getFullYear() + 1}
-                value={searchValues.year}
-                onChange={(event) => onSearchValueChange("year", event.target.value)}
-                placeholder={t("search.placeholders.year")}
-              />
-            </label>
-          </div>
-          <button type="submit" className="search-submit">
-            {loading ? t("search.searching") : t("search.submit")}
-          </button>
-        </form>
-      </div>
+              {error ? <p className="search-error">{error}</p> : null}
 
-      {open ? (
-        <div className="sheet-backdrop picker-backdrop" onClick={onClose} aria-hidden="true">
-          <section
-            className="discipline-picker search-results-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label={t("search.resultsKicker")}
-          >
-            <div className="sheet-handle" />
-            <div className="picker-header">
-              <div>
-                <p className="info-kicker">{t("search.resultsKicker")}</p>
-                <h3>{items.length > 0 ? t("search.resultCount", { count: items.length }) : emptyMessage}</h3>
-              </div>
-              <button type="button" className="sheet-close" onClick={onClose}>
-                {t("picker.done")}
-              </button>
-            </div>
+              {items.length > 0 ? (
+                <div className="likes-list search-results-page">
+                  {items.map((item) => {
+                    const hasAbstract = Boolean(String(item.abstract ?? "").trim());
+                    const hasPdf = Boolean(String(item.pdfUrl ?? "").trim());
+                    const hasDetail = Boolean(String(item.detailPageUrl ?? "").trim());
 
-            {error ? <p className="search-error">{error}</p> : null}
-
-            {items.length > 0 ? (
-              <div className="likes-list search-results-list">
-                {items.map((item) => {
-                  const hasAbstract = Boolean(String(item.abstract ?? "").trim());
-                  const hasPdf = Boolean(String(item.pdfUrl ?? "").trim());
-                  const hasDetail = Boolean(String(item.detailPageUrl ?? "").trim());
-
-                  return (
-                    <article key={item.id} className="liked-item search-result-item">
-                      <div className="liked-item-open">
-                        <div className="liked-item-meta">
-                          <span>{item.year}</span>
-                          <span>{item.author || t("search.noAuthor")}</span>
+                    return (
+                      <article key={item.id} className="liked-item search-result-item">
+                        <div className="liked-item-open">
+                          <div className="liked-item-meta">
+                            <span>{item.year}</span>
+                            <span>{item.author || t("search.noAuthor")}</span>
+                          </div>
+                          <h3>{item.title}</h3>
+                          <p>{item.university}</p>
+                          <p className="search-result-department">{item.department}</p>
+                          {hasAbstract ? (
+                            <p className="search-result-abstract">{previewAbstract(item.abstract, false)}</p>
+                          ) : null}
                         </div>
-                        <h3>{item.title}</h3>
-                        <p>{item.university}</p>
-                        <p className="search-result-department">{item.department}</p>
-                        {hasAbstract ? (
-                          <p className="search-result-abstract">{previewAbstract(item.abstract, false)}</p>
-                        ) : null}
-                      </div>
-                      <div className="search-result-actions">
-                        <button
-                          type="button"
-                          className={likedIds.includes(item.id) ? "liked-item-remove active-text" : "liked-item-remove"}
-                          onClick={() => onToggleLike(item)}
-                        >
-                          {likedIds.includes(item.id) ? t("search.actions.saved") : t("search.actions.save")}
-                        </button>
-                        {hasAbstract ? (
+                        <div className="search-result-actions">
                           <button
                             type="button"
-                            className="liked-item-remove"
-                            onClick={() => onOpenAbstract(item.id)}
+                            className={likedIds.includes(item.id) ? "liked-item-remove active-text" : "liked-item-remove"}
+                            onClick={() => onToggleLike(item)}
                           >
-                            {t("search.actions.abstract")}
+                            {likedIds.includes(item.id) ? t("search.actions.saved") : t("search.actions.save")}
                           </button>
-                        ) : null}
-                        {hasPdf ? (
-                          <a
-                            className="liked-item-remove"
-                            href={item.pdfUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {t("search.actions.pdf")}
-                          </a>
-                        ) : null}
-                        {hasDetail ? (
-                          <a
-                            className="liked-item-remove"
-                            href={item.detailPageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {t("search.actions.open")}
-                          </a>
-                        ) : null}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="empty-copy empty-likes search-empty">
-                <div className="empty-face" aria-hidden="true">
-                  ?
+                          {hasAbstract ? (
+                            <button
+                              type="button"
+                              className="liked-item-remove"
+                              onClick={() => onOpenAbstract(item.id)}
+                            >
+                              {t("search.actions.abstract")}
+                            </button>
+                          ) : null}
+                          {hasPdf ? (
+                            <a
+                              className="liked-item-remove"
+                              href={item.pdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {t("search.actions.pdf")}
+                            </a>
+                          ) : null}
+                          {hasDetail ? (
+                            <a
+                              className="liked-item-remove"
+                              href={item.detailPageUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {t("search.actions.open")}
+                            </a>
+                          ) : null}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
-                <p className="info-kicker">
-                  {hasSearched ? t("search.resultsKicker") : t("search.emptyKicker")}
-                </p>
-                <h3>{hasSearched ? emptyMessage : t("search.emptyTitle")}</h3>
+              ) : (
+                <div className="empty-copy empty-likes search-empty">
+                  <div className="empty-face" aria-hidden="true">
+                    ?
+                  </div>
+                  <p className="info-kicker">
+                    {hasSearched ? t("search.resultsKicker") : t("search.emptyKicker")}
+                  </p>
+                  <h3>{hasSearched ? emptyMessage : t("search.emptyTitle")}</h3>
+                </div>
+              )}
+            </>
+          ) : (
+            <form
+              className="search-form-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                onSubmit();
+              }}
+            >
+              <div className="search-form-grid">
+                {showGeneralQuery ? (
+                  <label className="search-field">
+                    <span>{t("search.fields.query")}</span>
+                    <input
+                      type="search"
+                      value={searchValues.query}
+                      onChange={(event) => onSearchValueChange("query", event.target.value)}
+                      placeholder={t("search.placeholders.query")}
+                    />
+                  </label>
+                ) : null}
+                <label className="search-field">
+                  <span>{t("search.fields.title")}</span>
+                  <input
+                    type="search"
+                    value={searchValues.title}
+                    onChange={(event) => onSearchValueChange("title", event.target.value)}
+                    placeholder={t("search.placeholders.title")}
+                  />
+                </label>
+                <label className="search-field">
+                  <span>{t("search.fields.author")}</span>
+                  <input
+                    type="search"
+                    value={searchValues.author}
+                    onChange={(event) => onSearchValueChange("author", event.target.value)}
+                    placeholder={t("search.placeholders.author")}
+                  />
+                </label>
+                <label className="search-field">
+                  <span>{t("search.fields.source")}</span>
+                  <input
+                    type="search"
+                    value={searchValues.source}
+                    onChange={(event) => onSearchValueChange("source", event.target.value)}
+                    placeholder={t("search.placeholders.source")}
+                  />
+                </label>
+                <label className="search-field">
+                  <span>{t("search.fields.year")}</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="1900"
+                    max={new Date().getFullYear() + 1}
+                    value={searchValues.year}
+                    onChange={(event) => onSearchValueChange("year", event.target.value)}
+                    placeholder={t("search.placeholders.year")}
+                  />
+                </label>
               </div>
-            )}
-          </section>
+              <button type="submit" className="search-submit">
+                {loading ? t("search.searching") : t("search.submit")}
+              </button>
+            </form>
+          )}
         </div>
-      ) : null}
+      </div>
     </section>
   );
 }
@@ -1796,6 +1884,7 @@ export default function App() {
     void loadFeed(0, true);
   }, [
     activeDisciplineId,
+    disciplineOptions,
     backend,
     yoktezServerUrl,
     feedMode,
@@ -2611,18 +2700,7 @@ export default function App() {
           }}
         >
           {activeTab === "feed" && loadingFeed && visibleFeed.length === 0 && (
-            <section className="info-screen empty-state">
-              <div className="empty-copy">
-                <p className="info-kicker">{t("thesis.loadingKicker")}</p>
-                <h3>
-                  {activeDisciplineOption.query
-                    ? t("thesis.loadingFiltered", { label: activeDisciplineOption.label })
-                    : feedMode === "random"
-                      ? t("thesis.loadingRandom")
-                      : t("thesis.loadingLatest")}
-                </h3>
-              </div>
-            </section>
+            <FeedLoadingState t={t} />
           )}
 
           {feedSlides.map((slide, index) => (
