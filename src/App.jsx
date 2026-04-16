@@ -110,6 +110,15 @@ const dedupeThesesById = (items) => {
   });
 };
 
+const hasMinimumTitleWords = (title, minimumWords = 3) =>
+  String(title ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length >= minimumWords;
+
+const filterShortTitleTheses = (items = []) =>
+  items.filter((item) => hasMinimumTitleWords(item?.title));
+
 const normalizePickerText = (value = "") =>
   value
     .toLocaleLowerCase("tr")
@@ -271,6 +280,88 @@ const buildFeedSlides = (items = []) => {
   return slides;
 };
 
+const DESKTOP_MEDIA_QUERY = "(min-width: 721px) and (pointer: fine)";
+
+const isDesktopViewport = () =>
+  !isNativePlatform() &&
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
+
+const isEditableElement = (target) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+const getCenteredFeedThesisId = (container) => {
+  if (!(container instanceof HTMLElement)) {
+    return null;
+  }
+
+  const slides = Array.from(container.querySelectorAll("[data-thesis-id]"));
+
+  if (!slides.length) {
+    return null;
+  }
+
+  const viewportCenter = window.innerHeight / 2;
+  let closestId = null;
+  let closestDistance = Number.POSITIVE_INFINITY;
+
+  slides.forEach((slide) => {
+    const thesisId = slide.getAttribute("data-thesis-id");
+
+    if (!thesisId) {
+      return;
+    }
+
+    const rect = slide.getBoundingClientRect();
+    const slideCenter = rect.top + rect.height / 2;
+    const distance = Math.abs(slideCenter - viewportCenter);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestId = thesisId;
+    }
+  });
+
+  return closestId;
+};
+
+const scrollFeedByDirection = (container, direction) => {
+  if (!(container instanceof HTMLElement)) {
+    return;
+  }
+
+  const slides = Array.from(container.querySelectorAll(".snap-screen"));
+
+  if (!slides.length) {
+    return;
+  }
+
+  const viewportCenter = window.innerHeight / 2;
+  let currentIndex = 0;
+  let closestDistance = Number.POSITIVE_INFINITY;
+
+  slides.forEach((slide, index) => {
+    const rect = slide.getBoundingClientRect();
+    const slideCenter = rect.top + rect.height / 2;
+    const distance = Math.abs(slideCenter - viewportCenter);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      currentIndex = index;
+    }
+  });
+
+  const nextIndex = Math.min(
+    Math.max(currentIndex + direction, 0),
+    slides.length - 1,
+  );
+
+  slides[nextIndex]?.scrollIntoView({ block: "start", behavior: "smooth" });
+};
+
 function HomeIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="tab-icon">
@@ -380,6 +471,37 @@ function BottomTabBar({ activeTab, onSelect, tabs }) {
         </button>
       ))}
     </nav>
+  );
+}
+
+function ShortcutKey({ label }) {
+  return <kbd className="shortcut-key">{label}</kbd>;
+}
+
+function DesktopShortcutPanel({ title, items, align = "left" }) {
+  if (!items.length) {
+    return null;
+  }
+
+  return (
+    <aside
+      className={`desktop-shortcuts desktop-shortcuts-${align}`}
+      aria-label={title}
+    >
+      <p className="desktop-shortcuts-title">{title}</p>
+      <div className="desktop-shortcuts-list">
+        {items.map((item) => (
+          <div key={`${title}-${item.label}`} className="desktop-shortcut-item">
+            <div className="desktop-shortcut-keys" aria-hidden="true">
+              {item.keys.map((key) => (
+                <ShortcutKey key={key} label={key} />
+              ))}
+            </div>
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -960,6 +1082,7 @@ function SearchResultList({
   onToggleLike,
   likedIds,
   onOpenAbstract,
+  showGeneralQuery = true,
   t,
 }) {
   const hasSearched = Object.values(searchValues).some((value) => String(value ?? "").trim());
@@ -975,15 +1098,17 @@ function SearchResultList({
           }}
         >
           <div className="search-form-grid">
-            <label className="search-field">
-              <span>{t("search.fields.query")}</span>
-              <input
-                type="search"
-                value={searchValues.query}
-                onChange={(event) => onSearchValueChange("query", event.target.value)}
-                placeholder={t("search.placeholders.query")}
-              />
-            </label>
+            {showGeneralQuery ? (
+              <label className="search-field">
+                <span>{t("search.fields.query")}</span>
+                <input
+                  type="search"
+                  value={searchValues.query}
+                  onChange={(event) => onSearchValueChange("query", event.target.value)}
+                  placeholder={t("search.placeholders.query")}
+                />
+              </label>
+            ) : null}
             <label className="search-field">
               <span>{t("search.fields.title")}</span>
               <input
@@ -1157,7 +1282,7 @@ function ThesisCard({
       style={
         backgroundImage
           ? {
-              backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.82)), url("${backgroundImage}")`,
+              backgroundImage: `linear-gradient(180deg, var(--image-overlay-top), var(--image-overlay-bottom)), url("${backgroundImage}")`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
@@ -1349,6 +1474,8 @@ export default function App() {
   const [pendingOpenThesisId, setPendingOpenThesisId] = useState(null);
   const [settingsPicker, setSettingsPicker] = useState(null);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [desktopViewport, setDesktopViewport] = useState(() => isDesktopViewport());
+  const [activeDesktopThesisId, setActiveDesktopThesisId] = useState(null);
   const observerRef = useRef(null);
   const tapTrackerRef = useRef({ id: null, time: 0, x: 0, y: 0 });
   const feedRef = useRef(null);
@@ -1437,8 +1564,12 @@ export default function App() {
       setDeferredInstallPrompt(event);
     };
     const mediaQuery = window.matchMedia?.("(display-mode: standalone)");
+    const desktopMediaQuery = window.matchMedia?.(DESKTOP_MEDIA_QUERY);
     const handleDisplayModeChange = (event) => {
       setIsInstalled(event.matches || window.navigator.standalone === true);
+    };
+    const handleDesktopViewportChange = (event) => {
+      setDesktopViewport(!isNativePlatform() && event.matches);
     };
 
     window.addEventListener("online", handleOnline);
@@ -1446,8 +1577,10 @@ export default function App() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleInstall);
     mediaQuery?.addEventListener?.("change", handleDisplayModeChange);
+    desktopMediaQuery?.addEventListener?.("change", handleDesktopViewportChange);
     setInstallPlatform(getInstallPlatform());
     setIsInstalled(isNativePlatform() || isStandaloneDisplay());
+    setDesktopViewport(isDesktopViewport());
 
     return () => {
       window.removeEventListener("online", handleOnline);
@@ -1455,6 +1588,7 @@ export default function App() {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleInstall);
       mediaQuery?.removeEventListener?.("change", handleDisplayModeChange);
+      desktopMediaQuery?.removeEventListener?.("change", handleDesktopViewportChange);
     };
   }, []);
 
@@ -1725,8 +1859,9 @@ export default function App() {
         feedRef.current?.scrollTo({ top: 0, behavior: "auto" });
       }
       const data = await fetchFeedPage(nextCursor, 4, apiConfig);
-      const fetchedItems =
-        feedMode === "random" ? shuffleItems(data.items ?? []) : (data.items ?? []);
+      const fetchedItems = filterShortTitleTheses(
+        feedMode === "random" ? shuffleItems(data.items ?? []) : (data.items ?? []),
+      );
 
       setCursor(data.nextCursor);
       setFeed((current) => {
@@ -1781,7 +1916,9 @@ export default function App() {
       const data = await fetchDisciplineFeed(disciplineOption.id, apiConfig);
       setCursor(0);
       const uniqueItems = dedupeThesesById(
-        feedMode === "random" ? shuffleItems(data.items ?? []) : (data.items ?? []),
+        filterShortTitleTheses(
+          feedMode === "random" ? shuffleItems(data.items ?? []) : (data.items ?? []),
+        ),
       );
       setFeed(uniqueItems);
       writeCachedValue(cacheKey, {
@@ -1916,7 +2053,9 @@ export default function App() {
   }
 
   const likedFeed = dedupeThesesById(
-    likedItems.map((liked) => feed.find((item) => item.id === liked.id) ?? liked),
+    filterShortTitleTheses(
+      likedItems.map((liked) => feed.find((item) => item.id === liked.id) ?? liked),
+    ),
   );
   const visibleFeed = activeTab === "likes" ? likedFeed : feed;
   const feedSlides =
@@ -1926,6 +2065,47 @@ export default function App() {
     likedFeed.find((item) => item.id === activeAbstractId) ??
     searchResults.find((item) => item.id === activeAbstractId) ??
     null;
+  const desktopFocusedThesis =
+    visibleFeed.find((item) => item.id === activeDesktopThesisId) ??
+    visibleFeed[0] ??
+    null;
+  const desktopPrimaryShortcuts = [
+    { keys: ["1"], label: t("tabs.feed") },
+    { keys: ["2"], label: t("tabs.likes") },
+    { keys: ["3"], label: t("tabs.search") },
+    { keys: ["4"], label: t("tabs.settings") },
+    ...(activeTab === "feed"
+      ? [
+          { keys: ["J", "↓"], label: t("shortcuts.nextThesis") },
+          { keys: ["K", "↑"], label: t("shortcuts.previousThesis") },
+        ]
+      : []),
+    ...(activeTab === "search" ? [{ keys: ["/"], label: t("shortcuts.focusSearch") }] : []),
+  ];
+  const desktopContextShortcuts =
+    activeTab === "feed"
+      ? [
+          {
+            keys: ["L"],
+            label: likedIds.includes(desktopFocusedThesis?.id)
+              ? t("shortcuts.unlikeThesis")
+              : t("shortcuts.likeThesis"),
+          },
+          Boolean(String(desktopFocusedThesis?.abstract ?? "").trim()) && {
+            keys: ["A"],
+            label: t("shortcuts.openAbstract"),
+          },
+          Boolean(String(desktopFocusedThesis?.pdfUrl ?? "").trim()) && {
+            keys: ["P"],
+            label: t("shortcuts.openPdf"),
+          },
+          desktopFocusedThesis && { keys: ["G"], label: t("shortcuts.openScholar") },
+          { keys: ["Esc"], label: t("shortcuts.closeSheets") },
+        ].filter(Boolean)
+      : [
+          { keys: ["/"], label: t("shortcuts.jumpToSearch") },
+          { keys: ["Esc"], label: t("shortcuts.closePanel") },
+        ];
 
   useEffect(() => {
     const currentContainer =
@@ -1944,6 +2124,173 @@ export default function App() {
       });
     });
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!desktopViewport || activeTab !== "feed") {
+      setActiveDesktopThesisId(null);
+      return;
+    }
+
+    const updateActiveThesis = () => {
+      setActiveDesktopThesisId(getCenteredFeedThesisId(feedRef.current));
+    };
+
+    updateActiveThesis();
+    const handleViewportChange = () => {
+      window.requestAnimationFrame(updateActiveThesis);
+    };
+
+    window.addEventListener("resize", handleViewportChange);
+
+    return () => {
+      window.removeEventListener("resize", handleViewportChange);
+    };
+  }, [desktopViewport, activeTab, feed]);
+
+  useEffect(() => {
+    if (!desktopViewport) {
+      return;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      const key = event.key;
+      const loweredKey = key.toLowerCase();
+      const target = event.target;
+      const activeFeedThesis =
+        visibleFeed.find((item) => item.id === getCenteredFeedThesisId(feedRef.current)) ??
+        visibleFeed[0] ??
+        null;
+
+      if (key === "Escape") {
+        if (activeAbstractId) {
+          setActiveAbstractId(null);
+          return;
+        }
+
+        if (settingsPicker) {
+          setSettingsPicker(null);
+          return;
+        }
+
+        if (disciplinePickerOpen) {
+          setDisciplinePickerOpen(false);
+          return;
+        }
+
+        if (aboutOpen) {
+          setAboutOpen(false);
+          return;
+        }
+
+        if (searchResultsOpen) {
+          setSearchResultsOpen(false);
+        }
+
+        return;
+      }
+
+      if (isEditableElement(target)) {
+        if (key === "/" && activeTab !== "search") {
+          event.preventDefault();
+          handleTabSelect("search");
+        }
+
+        return;
+      }
+
+      if (key === "/") {
+        event.preventDefault();
+        handleTabSelect("search");
+
+        window.requestAnimationFrame(() => {
+          searchRef.current?.querySelector("input")?.focus();
+        });
+        return;
+      }
+
+      if (["1", "2", "3", "4"].includes(key)) {
+        event.preventDefault();
+        handleTabSelect(
+          key === "1"
+            ? "feed"
+            : key === "2"
+              ? "likes"
+              : key === "3"
+                ? "search"
+                : "settings",
+        );
+        return;
+      }
+
+      if (activeTab !== "feed") {
+        return;
+      }
+
+      if (loweredKey === "j" || key === "ArrowDown") {
+        event.preventDefault();
+        scrollFeedByDirection(feedRef.current, 1);
+        return;
+      }
+
+      if (loweredKey === "k" || key === "ArrowUp") {
+        event.preventDefault();
+        scrollFeedByDirection(feedRef.current, -1);
+        return;
+      }
+
+      if (!activeFeedThesis) {
+        return;
+      }
+
+      if (loweredKey === "l") {
+        event.preventDefault();
+        toggleLike(activeFeedThesis);
+        return;
+      }
+
+      if (loweredKey === "a" && String(activeFeedThesis.abstract ?? "").trim()) {
+        event.preventDefault();
+        fireSelectionHaptic();
+        setActiveAbstractId(activeFeedThesis.id);
+        return;
+      }
+
+      if (loweredKey === "p" && String(activeFeedThesis.pdfUrl ?? "").trim()) {
+        event.preventDefault();
+        fireOpenHaptic();
+        openExternalUrl(activeFeedThesis.pdfUrl);
+        return;
+      }
+
+      if (loweredKey === "g") {
+        event.preventDefault();
+        fireOpenHaptic();
+        openExternalUrl(buildGoogleScholarUrl(activeFeedThesis), {
+          preferSameTab: installPlatform === "ios" && !isNativePlatform(),
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    desktopViewport,
+    activeTab,
+    visibleFeed,
+    activeAbstractId,
+    settingsPicker,
+    disciplinePickerOpen,
+    aboutOpen,
+    searchResultsOpen,
+    installPlatform,
+  ]);
 
   function handleTabSelect(nextTab) {
     const currentContainer =
@@ -2012,7 +2359,7 @@ export default function App() {
         limit: 20,
       }, apiConfig);
 
-      const items = dedupeThesesById(data.items ?? []);
+      const items = dedupeThesesById(filterShortTitleTheses(data.items ?? []));
       setSearchResults(items);
       setSearchResultsOpen(true);
       if (items.length === 0) {
@@ -2245,6 +2592,7 @@ export default function App() {
             }}
             onToggleLike={toggleLike}
             likedIds={likedIds}
+            showGeneralQuery={backend !== BACKEND_YOKTEZ}
             onOpenAbstract={(id) => {
               fireSelectionHaptic();
               setActiveAbstractId(id);
@@ -2257,6 +2605,9 @@ export default function App() {
           ref={feedRef}
           onScroll={() => {
             scrollPositionsRef.current.feed = feedRef.current?.scrollTop ?? 0;
+            if (desktopViewport) {
+              setActiveDesktopThesisId(getCenteredFeedThesisId(feedRef.current));
+            }
           }}
         >
           {activeTab === "feed" && loadingFeed && visibleFeed.length === 0 && (
@@ -2353,6 +2704,25 @@ export default function App() {
           )}
         </main>
       )}
+
+      {desktopViewport ? (
+        <>
+          <DesktopShortcutPanel
+            title={t("shortcuts.title")}
+            items={desktopPrimaryShortcuts}
+            align="left"
+          />
+          <DesktopShortcutPanel
+            title={
+              activeTab === "feed"
+                ? t("shortcuts.thesisTitle")
+                : t("shortcuts.actionsTitle")
+            }
+            items={desktopContextShortcuts}
+            align="right"
+          />
+        </>
+      ) : null}
 
       <BottomTabBar activeTab={activeTab} onSelect={handleTabSelect} tabs={tabs} />
       <DisciplinePickerModal
