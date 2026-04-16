@@ -723,10 +723,10 @@ select {
 }
 
 .search-results-page {
-    gap: 0;
+    gap: 0.9rem;
 }
 
-.search-result-item {
+.search-results-page .search-result-item {
     gap: 0.55rem;
     min-width: 0;
     padding: 1rem 0;
