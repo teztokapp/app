@@ -137,10 +137,11 @@ const translations = {
       aboutSummary:
         "Uygulamanın sürümünü ve nasıl çalıştığına dair kısa bilgileri gör.",
       aboutBody:
-        "TezTok, tez ve akademik yayınları dikey akış içinde keşfetmeyi kolaylaştıran mobil öncelikli bir okuma deneyimi sunar.",
+        "TezTok, tez ve akademik yayınları dikey akış içinde keşfetmeyi kolaylaştıran mobil öncelikli bir okuma deneyimi sunar. Şu anda 3 kaynak aktif: YÖK Tez, OpenAlex ve Crossref. Semantic Scholar ve CORE ise çok yakında gelecek.",
       aboutVersion: "Sürüm {version}",
       aboutSourceLabel: "Kaynaklar",
-      aboutSourceValue: "YÖK Tez, OpenAlex, Crossref ve diğerleri",
+      aboutSourceValue:
+        "3 aktif kaynak: YÖK Tez, OpenAlex, Crossref. Semantic Scholar ve CORE çok yakında.",
       aboutExperienceLabel: "Deneyim",
       aboutExperienceValue: "TikTok tarzı akış, arama ve beğeniler",
       aboutInstallLabel: "Kullanım",
@@ -386,10 +387,11 @@ const translations = {
       aboutSummary:
         "See the app version and a quick overview of how the app works.",
       aboutBody:
-        "TezTok is a mobile-first reading experience that makes it easier to explore theses and academic articles in a vertical feed.",
+        "TezTok is a mobile-first reading experience that makes it easier to explore theses and academic articles in a vertical feed. Right now, 3 sources are live: YOKTez, OpenAlex, and Crossref. Semantic Scholar and CORE are coming soon.",
       aboutVersion: "Version {version}",
       aboutSourceLabel: "Sources",
-      aboutSourceValue: "YOKTez, OpenAlex, Crossref, and more",
+      aboutSourceValue:
+        "3 live sources: YOKTez, OpenAlex, and Crossref. Semantic Scholar and CORE are coming soon.",
       aboutExperienceLabel: "Experience",
       aboutExperienceValue: "TikTok-style feed, search, and likes",
       aboutInstallLabel: "Availability",
