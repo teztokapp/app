@@ -599,14 +599,6 @@ function AboutSheet({ open, onClose, t }) {
               <span>{t("settings.aboutSourceLabel")}</span>
               <strong>{t("settings.aboutSourceValue")}</strong>
             </div>
-            <div className="about-meta-row">
-              <span>{t("settings.aboutExperienceLabel")}</span>
-              <strong>{t("settings.aboutExperienceValue")}</strong>
-            </div>
-            <div className="about-meta-row">
-              <span>{t("settings.aboutInstallLabel")}</span>
-              <strong>{t("settings.aboutInstallValue")}</strong>
-            </div>
           </div>
         </div>
       </section>
@@ -668,7 +660,7 @@ function SettingsPageHeader({ title, onBack, t }) {
         <ChevronIcon />
         <span>{t("settings.back")}</span>
       </button>
-      <h3>{title}</h3>
+      {title ? <h3>{title}</h3> : null}
     </div>
   );
 }
@@ -782,7 +774,6 @@ function SettingsScreen({
     { id: "general", label: t("settings.sections.general") },
     { id: "appearance", label: t("settings.sections.appearance") },
     { id: "sources", label: t("settings.sections.sources") },
-    { id: "about", label: t("settings.sections.about") },
   ];
 
   return (
@@ -887,15 +878,6 @@ function SettingsScreen({
                 </SettingsSection>
               ) : null}
 
-              {activeSection === "about" ? (
-                <SettingsSection title={t("settings.sections.about")} hideTitle>
-                  <SettingsSelectRow
-                    label={t("settings.aboutTitle")}
-                    value=""
-                    onOpen={onOpenAbout}
-                  />
-                </SettingsSection>
-              ) : null}
             </>
           ) : (
             <SettingsSection title={t("tabs.settings")}>
@@ -907,6 +889,11 @@ function SettingsScreen({
                   onOpen={() => setActiveSection(section.id)}
                 />
               ))}
+              <SettingsSelectRow
+                label={t("settings.aboutTitle")}
+                value=""
+                onOpen={onOpenAbout}
+              />
             </SettingsSection>
           )}
         </div>
@@ -1130,41 +1117,43 @@ function AbstractSheet({ thesis, open, onClose, t }) {
 function LikedThesisList({ items, onOpenFeed, onRemoveLike, t }) {
   return (
     <section className="likes-list-screen">
-      {items.length === 0 ? (
-        <div className="empty-copy empty-likes">
-          <div className="empty-face" aria-hidden="true">
-            :(
+      <div className="settings-page-transition" key={items.length === 0 ? "empty" : "list"}>
+        {items.length === 0 ? (
+          <div className="empty-copy empty-likes">
+            <div className="empty-face" aria-hidden="true">
+              :(
+            </div>
+            <p className="info-kicker">{t("likes.emptyKicker")}</p>
+            <h3>{t("likes.emptyTitle")}</h3>
           </div>
-          <p className="info-kicker">{t("likes.emptyKicker")}</p>
-          <h3>{t("likes.emptyTitle")}</h3>
-        </div>
-      ) : (
-        <div className="likes-list">
-          {items.map((thesis) => (
-            <article key={thesis.id} className="liked-item">
-              <button
-                type="button"
-                className="liked-item-open"
-                onClick={() => onOpenFeed(thesis.id)}
-              >
-              <div className="liked-item-meta">
-                <span>{thesis.year}</span>
-                <span>{thesis.author}</span>
-              </div>
-              <h3>{thesis.title}</h3>
-              <p>{thesis.university}</p>
-              </button>
-              <button
-                type="button"
-                className="liked-item-remove"
-                onClick={() => onRemoveLike(thesis)}
-              >
-                {t("likes.remove")}
-              </button>
-            </article>
-          ))}
-        </div>
-      )}
+        ) : (
+          <div className="likes-list">
+            {items.map((thesis) => (
+              <article key={thesis.id} className="liked-item">
+                <button
+                  type="button"
+                  className="liked-item-open"
+                  onClick={() => onOpenFeed(thesis.id)}
+                >
+                <div className="liked-item-meta">
+                  <span>{thesis.year}</span>
+                  <span>{thesis.author}</span>
+                </div>
+                <h3>{thesis.title}</h3>
+                <p>{thesis.university}</p>
+                </button>
+                <button
+                  type="button"
+                  className="liked-item-remove"
+                  onClick={() => onRemoveLike(thesis)}
+                >
+                  {t("likes.remove")}
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
