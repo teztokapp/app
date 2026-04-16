@@ -793,13 +793,6 @@ function SettingsScreen({
 
               {activeSection === "general" ? (
                 <SettingsSection title={t("settings.sections.general")} hideTitle>
-                  {showInstallPrompt ? (
-                    <InstallSettingsRow
-                      t={t}
-                      installPlatform={installPlatform}
-                      onInstallApp={onInstallApp}
-                    />
-                  ) : null}
                   <SettingsSelectRow
                     label={t("settings.language")}
                     value={localeLabel}
@@ -881,6 +874,13 @@ function SettingsScreen({
             </>
           ) : (
             <SettingsSection title={t("tabs.settings")}>
+              {showInstallPrompt ? (
+                <InstallSettingsRow
+                  t={t}
+                  installPlatform={installPlatform}
+                  onInstallApp={onInstallApp}
+                />
+              ) : null}
               {settingsSections.map((section) => (
                 <SettingsSelectRow
                   key={section.id}
@@ -1548,6 +1548,7 @@ export default function App() {
   const [feedError, setFeedError] = useState("");
   const [heartBursts, setHeartBursts] = useState([]);
   const [backgroundImages, setBackgroundImages] = useState({});
+  const [disciplineOptionsReady, setDisciplineOptionsReady] = useState(false);
   const [pendingOpenThesisId, setPendingOpenThesisId] = useState(null);
   const [settingsPicker, setSettingsPicker] = useState(null);
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -1774,6 +1775,7 @@ export default function App() {
     if (requiresCustomYoktezUrl) {
       setDisciplineOptions([{ id: "all", label: backendMeta.allFilterLabel, query: "" }]);
       setActiveDisciplineId("all");
+      setDisciplineOptionsReady(true);
       setFeed([]);
       setCursor(0);
       setLoadingFeed(false);
@@ -1781,6 +1783,8 @@ export default function App() {
       setFeedEmptyMessage(t("providers.yoktez.requiresServer"));
       return;
     }
+
+    setDisciplineOptionsReady(false);
 
     void fetchDisciplines(apiConfig)
       .then((data) => {
@@ -1797,6 +1801,7 @@ export default function App() {
 
         setFeedError("");
         setDisciplineOptions(nextOptions);
+        setDisciplineOptionsReady(true);
         writeCachedValue(getDisciplinesCacheKey(offlineScope), nextOptions);
 
         const validIds = new Set(["all", ...liveOptions.map((item) => item.id)]);
@@ -1822,6 +1827,7 @@ export default function App() {
             : [{ id: "all", label: backendMeta.allFilterLabel, query: "" }];
 
         setDisciplineOptions(fallbackOptions);
+        setDisciplineOptionsReady(true);
         setDefaultDisciplineId((current) =>
           fallbackOptions.some((item) => item.id === current) ? current : "all",
         );
@@ -1847,7 +1853,7 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    if (requiresCustomYoktezUrl) {
+    if (requiresCustomYoktezUrl || !disciplineOptionsReady) {
       return;
     }
 
@@ -1872,6 +1878,7 @@ export default function App() {
     setFeed([]);
     void loadFeed(0, true);
   }, [
+    disciplineOptionsReady,
     activeDisciplineId,
     disciplineOptions,
     backend,
@@ -2081,7 +2088,9 @@ export default function App() {
   }
 
   function spawnHeart(id, event) {
-    const rect = event.currentTarget.getBoundingClientRect();
+    const burstContainer =
+      event.currentTarget.closest(".snap-screen") ?? event.currentTarget;
+    const rect = burstContainer.getBoundingClientRect();
     const burst = {
       key: `${id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       thesisId: id,
@@ -2679,7 +2688,7 @@ export default function App() {
         </div>
       ) : (
         <main
-          className="feed"
+          className="feed settings-page-transition"
           ref={feedRef}
           onScroll={() => {
             scrollPositionsRef.current.feed = feedRef.current?.scrollTop ?? 0;

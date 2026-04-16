@@ -60,7 +60,9 @@ html[data-theme="dark"] {
 }
 
 html {
+    height: 100%;
     scroll-snap-type: y mandatory;
+    overflow: hidden;
     background: var(--bg);
     color-scheme: light;
 }
@@ -71,14 +73,20 @@ html[data-theme="dark"] {
 
 body {
     margin: 0;
+    height: 100%;
     color: var(--paper);
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         Segoe UI,
         sans-serif;
-    min-height: 100vh;
+    overflow: hidden;
     background: var(--bg);
+}
+
+#root {
+    height: 100%;
+    overflow: hidden;
 }
 
 button,
@@ -90,7 +98,8 @@ select {
 
 .app-shell {
     position: relative;
-    min-height: 100svh;
+    height: 100svh;
+    overflow: hidden;
 }
 
 .floating-header {
@@ -210,8 +219,14 @@ select {
 .feed {
     height: 100svh;
     overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
     scroll-snap-type: y mandatory;
     padding-bottom: 5.75rem;
+}
+
+.feed::-webkit-scrollbar {
+    display: none;
 }
 
 .snap-screen {
@@ -1052,6 +1067,12 @@ select {
     min-height: 100svh;
     height: 100svh;
     overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.tab-scroll::-webkit-scrollbar {
+    display: none;
 }
 
 .picker-backdrop {
@@ -1697,14 +1718,30 @@ select {
         font-size: 0.68rem;
     }
 
-    .tab-bar::before {
-        content: none;
-    }
-
     .tab-bar {
         bottom: 0;
         width: min(calc(100vw - 1.5rem), 34rem);
         padding: 0.4rem;
+    }
+
+    .tab-bar::before {
+        content: "";
+        position: absolute;
+        top: -5.5rem;
+        right: -2.5rem;
+        bottom: -1.25rem;
+        left: -2.5rem;
+        z-index: -1;
+        background:
+            radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--bg) 88%, transparent), transparent 68%),
+            linear-gradient(
+                180deg,
+                transparent 0%,
+                color-mix(in srgb, var(--bg) 18%, transparent) 24%,
+                color-mix(in srgb, var(--bg) 78%, transparent) 72%,
+                color-mix(in srgb, var(--bg) 96%, transparent) 100%
+            );
+        pointer-events: none;
     }
 
     .tab-button {
