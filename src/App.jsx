@@ -222,6 +222,36 @@ function InfoIcon() {
   );
 }
 
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="action-icon">
+      <path
+        d="M14 5h5v5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 14 19 5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M19 13v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 const previewAbstract = (text, expanded) => {
   if (expanded || text.length < 140) {
     return text;
@@ -1368,13 +1398,15 @@ function DisciplinePickerModal({
   );
 }
 
-function AbstractSheet({ thesis, open, onClose, t }) {
+function AbstractSheet({ thesis, open, onClose, onShare, noteValue, onNoteChange, t }) {
   const { isRendered, isClosing } = useModalPresence(open);
   const [displayThesis, setDisplayThesis] = useState(thesis);
+  const [activeView, setActiveView] = useState("abstract");
 
   useEffect(() => {
     if (thesis) {
       setDisplayThesis(thesis);
+      setActiveView("abstract");
     }
   }, [thesis]);
 
@@ -1403,9 +1435,49 @@ function AbstractSheet({ thesis, open, onClose, t }) {
           </button>
         </div>
         <h3>{displayThesis.title}</h3>
-        <div className="sheet-body">
-          <p>{displayThesis.abstract}</p>
+        <div className="abstract-sheet-actions">
+          <button type="button" className="ghost-button" onClick={() => onShare(displayThesis)}>
+            {t("thesis.share")}
+          </button>
         </div>
+        <div className="sheet-tab-bar" role="tablist" aria-label={t("sheet.fullAbstract")}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "abstract"}
+            className={activeView === "abstract" ? "sheet-tab active" : "sheet-tab"}
+            onClick={() => setActiveView("abstract")}
+          >
+            {t("search.actions.abstract")}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "notes"}
+            className={activeView === "notes" ? "sheet-tab active" : "sheet-tab"}
+            onClick={() => setActiveView("notes")}
+          >
+            {t("thesis.notes")}
+          </button>
+        </div>
+        {activeView === "abstract" ? (
+          <div className="sheet-body">
+            <p>{displayThesis.abstract}</p>
+          </div>
+        ) : (
+          <div className="note-panel">
+            <label className="note-label" htmlFor={`note-${displayThesis.id}`}>
+              {t("thesis.notes")}
+            </label>
+            <textarea
+              id={`note-${displayThesis.id}`}
+              className="note-input"
+              value={noteValue}
+              onChange={(event) => onNoteChange(event.target.value)}
+              placeholder={t("thesis.notesPlaceholder")}
+            />
+          </div>
+        )}
       </section>
     </div>
   );
@@ -1637,6 +1709,7 @@ function ThesisCard({
   pdfUrl,
   scholarUrl,
   scholarSameTab,
+  onShare,
   backgroundImage,
   backgroundMeta,
 }) {
@@ -1717,6 +1790,20 @@ function ThesisCard({
             <ScholarIcon />
           </a>
         ) : null}
+        <button
+          type="button"
+          className="action"
+          onClick={(event) => {
+            event.stopPropagation();
+            onShare(thesis);
+          }}
+          onPointerUp={(event) => event.stopPropagation()}
+          data-no-double-tap="true"
+          aria-label={t("thesis.share")}
+          title={t("thesis.share")}
+        >
+          <ShareIcon />
+        </button>
       </aside>
 
       <div className="screen-bottom">
@@ -1836,6 +1923,7 @@ export default function App() {
     const raw = window.localStorage.getItem("teztok-liked-items");
     return raw ? JSON.parse(raw) : [];
   });
+  const [thesisNotes, setThesisNotes] = useState(() => readCachedValue("teztok-notes", {}));
   const [activeAbstractId, setActiveAbstractId] = useState(null);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [feedEmptyMessage, setFeedEmptyMessage] = useState("");
@@ -1870,6 +1958,10 @@ export default function App() {
   useEffect(() => {
     writeCachedValue("teztok-liked", likedIds);
   }, [likedIds]);
+
+  useEffect(() => {
+    writeCachedValue("teztok-notes", thesisNotes);
+  }, [thesisNotes]);
 
   useEffect(() => {
     writeCachedValue("teztok-liked-items", likedItems);
@@ -2470,6 +2562,7 @@ export default function App() {
     likedFeed.find((item) => item.id === activeAbstractId) ??
     searchResults.find((item) => item.id === activeAbstractId) ??
     null;
+  const activeAbstractNote = activeAbstractId ? thesisNotes[activeAbstractId] ?? "" : "";
   const desktopFocusedThesis =
     visibleFeed.find((item) => item.id === activeDesktopThesisId) ??
     visibleFeed[0] ??
@@ -2823,6 +2916,54 @@ export default function App() {
     setDisciplinePickerOpen(true);
   }
 
+  async function handleShareThesis(thesis) {
+    if (!thesis) {
+      return;
+    }
+
+    const shareText = [thesis.title, String(thesis.pdfUrl ?? "").trim()].filter(Boolean).join("\n");
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: thesis.title,
+          text: shareText,
+          url: String(thesis.pdfUrl ?? "").trim() || undefined,
+        });
+        return;
+      }
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+    } catch {}
+  }
+
+  function updateThesisNote(thesisId, value) {
+    setThesisNotes((current) => {
+      const trimmedValue = value.trim();
+
+      if (!trimmedValue) {
+        if (!(thesisId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[thesisId];
+        return next;
+      }
+
+      return {
+        ...current,
+        [thesisId]: value,
+      };
+    });
+  }
+
   const settingsPickerConfig =
     settingsPicker === "backend"
       ? {
@@ -3059,6 +3200,7 @@ export default function App() {
                     pdfUrl={slide.thesis.pdfUrl}
                     scholarUrl={buildGoogleScholarUrl(slide.thesis)}
                     scholarSameTab={installPlatform === "ios" && !isNativePlatform()}
+                    onShare={handleShareThesis}
                     onSurfacePointerUp={handlePointerUp(slide.thesis.id)}
                     backgroundImage={canLoadBackgroundImages ? backgroundImages[slide.thesis.id]?.imageUrl : null}
                     backgroundMeta={canLoadBackgroundImages ? backgroundImages[slide.thesis.id] : null}
@@ -3174,6 +3316,13 @@ export default function App() {
         thesis={activeAbstractThesis}
         open={Boolean(activeAbstractThesis)}
         onClose={() => setActiveAbstractId(null)}
+        onShare={handleShareThesis}
+        noteValue={activeAbstractNote}
+        onNoteChange={(value) => {
+          if (activeAbstractId) {
+            updateThesisNote(activeAbstractId, value);
+          }
+        }}
       />
       <WheelPickerSheet
         t={t}

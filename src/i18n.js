@@ -249,6 +249,9 @@ const translations = {
     },
     thesis: {
       readAbstract: "Özeti oku",
+      share: "Paylaş",
+      notes: "Notlar",
+      notesPlaceholder: "Bu tez için not ekle...",
       noItems: "Şu anda gösterilecek tez yok.",
       noItemsTitle: "Tez yok",
       feedLoadError: "Tez akışı alınamadı. {hint}",
@@ -507,6 +510,9 @@ const translations = {
     },
     thesis: {
       readAbstract: "Read abstract",
+      share: "Share",
+      notes: "Notes",
+      notesPlaceholder: "Add notes for this thesis...",
       noItems: "There is nothing to show right now.",
       noItemsTitle: "No theses",
       feedLoadError: "The thesis feed could not be loaded. {hint}",
