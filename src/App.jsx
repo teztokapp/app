@@ -817,12 +817,6 @@ function AboutSheet({ open, onClose, t }) {
         </div>
         <div className="sheet-body about-sheet-body">
           <p>{t("settings.aboutBody")}</p>
-          <div className="about-sheet-meta">
-            <div className="about-meta-row">
-              <span>{t("settings.aboutSourceLabel")}</span>
-              <strong>{t("settings.aboutSourceValue")}</strong>
-            </div>
-          </div>
         </div>
       </section>
     </div>
@@ -2148,7 +2142,7 @@ export default function App() {
   ];
   const localeOptions = LOCALE_OPTIONS.map((option) => ({
     id: option.id,
-    label: t(option.labelKey),
+    label: option.label,
   }));
   const backendOptions = getBackendOptions(locale);
   const activeDisciplineOption =
