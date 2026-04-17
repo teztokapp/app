@@ -653,18 +653,6 @@ function SettingsSection({ title, children, hideTitle = false }) {
   );
 }
 
-function SettingsPageHeader({ title, onBack, t }) {
-  return (
-    <div className="settings-page-header">
-      <button type="button" className="settings-back-button" onClick={onBack}>
-        <ChevronIcon />
-        <span>{t("settings.back")}</span>
-      </button>
-      {title ? <h3>{title}</h3> : null}
-    </div>
-  );
-}
-
 function SupportSlide({ t, onContinue }) {
   const hasSupportUrl = Boolean(SUPPORT_URL);
 
@@ -750,8 +738,9 @@ function SettingsScreen({
   installPlatform,
   onInstallApp,
   onOpenAbout,
+  activeSection,
+  onSetActiveSection,
 }) {
-  const [activeSection, setActiveSection] = useState(null);
   const themeLabel =
     themeOptions.find((option) => option.id === theme)?.label ?? theme;
   const localeLabel =
@@ -785,12 +774,6 @@ function SettingsScreen({
         >
           {activeSection ? (
             <>
-              <SettingsPageHeader
-                title={t(`settings.sections.${activeSection}`)}
-                onBack={() => setActiveSection(null)}
-                t={t}
-              />
-
               {activeSection === "general" ? (
                 <SettingsSection title={t("settings.sections.general")} hideTitle>
                   <SettingsSelectRow
@@ -873,7 +856,7 @@ function SettingsScreen({
 
             </>
           ) : (
-            <SettingsSection title={t("tabs.settings")}>
+            <SettingsSection title={t("tabs.settings")} hideTitle>
               {showInstallPrompt ? (
                 <InstallSettingsRow
                   t={t}
@@ -886,7 +869,7 @@ function SettingsScreen({
                   key={section.id}
                   label={section.label}
                   value=""
-                  onOpen={() => setActiveSection(section.id)}
+                  onOpen={() => onSetActiveSection(section.id)}
                 />
               ))}
               <SettingsSelectRow
@@ -1182,11 +1165,6 @@ function SearchResultList({
         <div className="settings-page-transition" key={open ? "results" : "form"}>
           {open ? (
             <>
-              <SettingsPageHeader
-                title={t("search.resultsKicker")}
-                onBack={onClose}
-                t={t}
-              />
               {error ? <p className="search-error">{error}</p> : null}
 
               {items.length > 0 ? (
@@ -1499,6 +1477,7 @@ export default function App() {
   const [searchError, setSearchError] = useState("");
   const [searchEmptyMessage, setSearchEmptyMessage] = useState("");
   const [searchResultsOpen, setSearchResultsOpen] = useState(false);
+  const [settingsActiveSection, setSettingsActiveSection] = useState(null);
   const [disciplineOptions, setDisciplineOptions] = useState([
     {
       id: "all",
@@ -1681,6 +1660,23 @@ export default function App() {
     { id: "search", label: t("tabs.search"), icon: "search" },
     { id: "settings", label: t("tabs.settings"), icon: "settings", badge: canShowInstallPrompt },
   ];
+  const activeTabConfig = tabs.find((tab) => tab.id === activeTab);
+  const headerTitle =
+    activeTab === "feed"
+      ? t("app.title")
+      : activeTab === "settings" && settingsActiveSection
+        ? t(`settings.sections.${settingsActiveSection}`)
+        : activeTab === "search" && searchResultsOpen
+          ? t("search.resultsKicker")
+          : activeTabConfig?.label ?? t("app.title");
+  const headerBackAction =
+    activeTab === "settings" && settingsActiveSection
+      ? () => setSettingsActiveSection(null)
+      : activeTab === "search" && searchResultsOpen
+        ? () => setSearchResultsOpen(false)
+        : null;
+  const headerClassName = activeTab === "feed" ? "header-leading header-leading-feed" : "header-leading";
+  const headerTitleClassName = activeTab === "feed" ? "header-title header-title-feed" : "header-title";
   const themeOptions = [
     { id: "light", label: t("options.theme.light") },
     { id: "dark", label: t("options.theme.dark") },
@@ -2564,8 +2560,21 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="floating-header">
-        <div className="header-brand">
-          <h2>{t("app.title")}</h2>
+        <div className={headerClassName}>
+          {headerBackAction ? (
+            <button
+              type="button"
+              className="header-back-button"
+              onClick={headerBackAction}
+              aria-label={t("settings.back")}
+            >
+              <ChevronIcon />
+              <span>{t("settings.back")}</span>
+            </button>
+          ) : null}
+          <div className={headerTitleClassName}>
+            <h2>{headerTitle}</h2>
+          </div>
         </div>
         {activeTab === "feed" ? (
           <div className="header-actions">
@@ -2597,7 +2606,7 @@ export default function App() {
       {activeTab === "settings" ? (
         <div
           ref={settingsRef}
-          className="tab-scroll"
+          className="tab-scroll tab-scroll-with-header-gap"
           onScroll={() => {
             scrollPositionsRef.current.settings = settingsRef.current?.scrollTop ?? 0;
           }}
@@ -2638,12 +2647,14 @@ export default function App() {
               fireSelectionHaptic();
               setAboutOpen(true);
             }}
+            activeSection={settingsActiveSection}
+            onSetActiveSection={setSettingsActiveSection}
           />
         </div>
       ) : activeTab === "likes" ? (
         <div
           ref={likesRef}
-          className="tab-scroll"
+          className="tab-scroll tab-scroll-with-header-gap"
           onScroll={() => {
             scrollPositionsRef.current.likes = likesRef.current?.scrollTop ?? 0;
           }}
@@ -2658,7 +2669,7 @@ export default function App() {
       ) : activeTab === "search" ? (
         <div
           ref={searchRef}
-          className="tab-scroll"
+          className="tab-scroll tab-scroll-with-header-gap"
           onScroll={() => {
             scrollPositionsRef.current.search = searchRef.current?.scrollTop ?? 0;
           }}

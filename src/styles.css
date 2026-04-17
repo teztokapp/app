@@ -121,6 +121,39 @@ select {
     pointer-events: auto;
 }
 
+.header-leading {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 2rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    position: relative;
+}
+
+.header-leading-feed {
+    position: static;
+}
+
+.header-title {
+    position: absolute;
+    left: 50%;
+    width: min(calc(100% - 8rem), 20rem);
+    min-width: 0;
+    transform: translateX(-50%);
+    pointer-events: none;
+    text-align: center;
+}
+
+.header-title-feed {
+    position: static;
+    width: auto;
+    flex: 1 1 auto;
+    transform: none;
+    pointer-events: auto;
+    text-align: left;
+}
+
 .offline-banner {
     position: fixed;
     top: 4.6rem;
@@ -139,18 +172,10 @@ select {
     backdrop-filter: blur(14px);
 }
 
-.header-brand,
 .header-actions {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-}
-
-.header-brand {
-    flex: 1 1 auto;
-}
-
-.header-actions {
     flex: 0 0 auto;
     margin-left: auto;
     justify-content: flex-end;
@@ -163,12 +188,31 @@ select {
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--header-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-back-button {
+    width: max-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--header-ink);
+    font-weight: 700;
+}
+
+.header-back-button .settings-chevron {
+    transform: rotate(180deg);
 }
 
 .topic-select {
     display: inline-flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     width: auto;
     max-width: min(52vw, 14rem);
     min-height: 2rem;
@@ -179,11 +223,11 @@ select {
     background: transparent;
     appearance: none;
     -webkit-appearance: none;
-    text-align: right;
+    text-align: left;
     font-size: 0.98rem;
     font-weight: 500;
     opacity: 0.9;
-    margin-left: auto;
+    margin-left: 0;
 }
 
 .topic-select span {
@@ -889,38 +933,9 @@ select {
     margin-top: 2rem;
 }
 
-.settings-page-header {
-    display: grid;
-    gap: 0.55rem;
-    margin-bottom: 1.35rem;
-}
-
 .settings-page-transition {
     animation: settings-page-enter 220ms cubic-bezier(0.22, 1, 0.36, 1);
     transform-origin: top center;
-}
-
-.settings-page-header h3 {
-    margin: 0;
-    font-size: 1.5rem;
-    line-height: 1.08;
-    letter-spacing: -0.03em;
-}
-
-.settings-back-button {
-    width: max-content;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font-weight: 700;
-}
-
-.settings-back-button .settings-chevron {
-    transform: rotate(180deg);
 }
 
 @keyframes settings-page-enter {
@@ -1069,6 +1084,11 @@ select {
     overflow-y: auto;
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+.tab-scroll-with-header-gap {
+    padding-top: 1.25rem;
+    box-sizing: border-box;
 }
 
 .tab-scroll::-webkit-scrollbar {
