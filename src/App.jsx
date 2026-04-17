@@ -733,6 +733,14 @@ function ChevronIcon() {
   );
 }
 
+function SettingsGlyph({ tone = "neutral", children }) {
+  return (
+    <span className={`settings-select-icon settings-select-icon-${tone}`} aria-hidden="true">
+      {children}
+    </span>
+  );
+}
+
 function SettingsSelectRow({
   label,
   value,
@@ -740,12 +748,19 @@ function SettingsSelectRow({
   onOpen,
   indicator,
   leadingIcon,
+  leadingTone = "neutral",
   valueAsBadge = false,
 }) {
   const hasValue = Boolean(value);
 
   return (
-    <div className="info-row">
+    <div
+      className={[
+        "info-row",
+        hasValue ? "settings-row-detail" : "settings-row-inline",
+        leadingIcon ? "settings-row-with-icon" : "",
+      ].join(" ")}
+    >
       {hasValue ? (
         <>
           <div className="settings-label-row">
@@ -768,13 +783,13 @@ function SettingsSelectRow({
           onClick={onOpen}
         >
           <span className="settings-select-label">
-            {leadingIcon ? <span className="settings-select-icon" aria-hidden="true">{leadingIcon}</span> : null}
+            {leadingIcon ? <SettingsGlyph tone={leadingTone}>{leadingIcon}</SettingsGlyph> : null}
             <span>{label}</span>
           </span>
           <ChevronIcon />
         </button>
       )}
-      {helper ? <span>{helper}</span> : null}
+      {helper ? <span className="settings-helper-text">{helper}</span> : null}
     </div>
   );
 }
@@ -839,12 +854,17 @@ function InstallSettingsRow({ t, installPlatform, onInstallApp }) {
 
   if (installPlatform === "ios") {
     return (
-      <div className="info-row">
-        <p>{t("install.title")}</p>
-        <div className="settings-static">
-          <span>{value}</span>
+      <div className="info-row settings-row-detail settings-row-with-icon settings-install-row">
+        <div className="settings-install-header">
+          <span className="settings-select-label">
+            <SettingsGlyph tone="blue">
+              <ShareIcon />
+            </SettingsGlyph>
+            <span>{t("install.title")}</span>
+          </span>
+          <ChevronIcon />
         </div>
-        <span>{helper}</span>
+        <span className="settings-helper-text">{helper}</span>
       </div>
     );
   }
@@ -856,6 +876,8 @@ function InstallSettingsRow({ t, installPlatform, onInstallApp }) {
       helper={helper}
       onOpen={onInstallApp}
       indicator=" "
+      leadingIcon={<ShareIcon />}
+      leadingTone="blue"
       valueAsBadge
     />
   );
@@ -977,13 +999,13 @@ function SettingsScreen({
     yearOptions.find((option) => option.id === year)?.label ?? year;
   const showNativeHaptics = isNativePlatform();
   const settingsSections = [
-    { id: "general", label: t("settings.sections.general"), icon: <SlidersIcon /> },
-    { id: "appearance", label: t("settings.sections.appearance"), icon: <SparklesIcon /> },
-    { id: "sources", label: t("settings.sections.sources"), icon: <LayersIcon /> },
+    { id: "general", label: t("settings.sections.general"), icon: <SlidersIcon />, tone: "gray" },
+    { id: "appearance", label: t("settings.sections.appearance"), icon: <SparklesIcon />, tone: "blue" },
+    { id: "sources", label: t("settings.sections.sources"), icon: <LayersIcon />, tone: "orange" },
   ];
 
   return (
-    <section className="info-screen">
+    <section className="info-screen settings-screen">
       <div className="info-list">
         <div
           key={activeSection ?? "root"}
@@ -1073,30 +1095,40 @@ function SettingsScreen({
 
             </>
           ) : (
-            <SettingsSection title={t("tabs.settings")} hideTitle>
+            <>
               {showInstallPrompt ? (
-                <InstallSettingsRow
-                  t={t}
-                  installPlatform={installPlatform}
-                  onInstallApp={onInstallApp}
-                />
+                <SettingsSection title={t("install.title")} hideTitle>
+                  <InstallSettingsRow
+                    t={t}
+                    installPlatform={installPlatform}
+                    onInstallApp={onInstallApp}
+                  />
+                </SettingsSection>
               ) : null}
-              {settingsSections.map((section) => (
+
+              <SettingsSection title={t("tabs.settings")} hideTitle>
+                {settingsSections.map((section) => (
+                  <SettingsSelectRow
+                    key={section.id}
+                    label={section.label}
+                    value=""
+                    leadingIcon={section.icon}
+                    leadingTone={section.tone}
+                    onOpen={() => onSetActiveSection(section.id)}
+                  />
+                ))}
+              </SettingsSection>
+
+              <SettingsSection title={t("settings.aboutTitle")} hideTitle>
                 <SettingsSelectRow
-                  key={section.id}
-                  label={section.label}
+                  label={t("settings.aboutTitle")}
                   value=""
-                  leadingIcon={section.icon}
-                  onOpen={() => onSetActiveSection(section.id)}
+                  leadingIcon={<InfoIcon />}
+                  leadingTone="blue"
+                  onOpen={onOpenAbout}
                 />
-              ))}
-              <SettingsSelectRow
-                label={t("settings.aboutTitle")}
-                value=""
-                leadingIcon={<InfoIcon />}
-                onOpen={onOpenAbout}
-              />
-            </SettingsSection>
+              </SettingsSection>
+            </>
           )}
         </div>
       </div>

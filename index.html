@@ -4,6 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>TezTok</title>
+        <meta name="theme-color" content="#e7e3dc" />
         <meta name="theme-color" content="#e7e3dc" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
         <meta
@@ -12,6 +13,26 @@
         />
         <link rel="manifest" href="/app.webmanifest" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <script>
+            (() => {
+                const theme = window.localStorage.getItem("teztok-theme") ?? "light";
+                const themeMetaColors = {
+                    light: "#e7e3dc",
+                    dark: "#000000",
+                    dracula: "#191a21",
+                    forest: "#102217",
+                    solarized: "#fdf6e3",
+                };
+                const themeColor = themeMetaColors[theme] ?? themeMetaColors.dark;
+
+                document.documentElement.dataset.theme = theme;
+
+                const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+                if (themeColorMeta) {
+                    themeColorMeta.setAttribute("content", themeColor);
+                }
+            })();
+        </script>
         <script type="module" src="/src/main.jsx"></script>
     </head>
     <body>

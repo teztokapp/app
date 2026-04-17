@@ -22,6 +22,10 @@
     --surface-border: rgba(24, 22, 20, 0.12);
     --surface-bg-soft: rgba(24, 22, 20, 0.05);
     --surface-bg-strong: rgba(246, 240, 232, 0.92);
+    --settings-card-bg: #f7f6f3;
+    --settings-card-border: rgba(24, 22, 20, 0.06);
+    --settings-card-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    --settings-divider: rgba(60, 60, 67, 0.16);
     --tab-fade-top: rgba(231, 227, 220, 0);
     --tab-fade-mid: rgba(231, 227, 220, 0.82);
     --tab-fade-bottom: rgba(231, 227, 220, 0.98);
@@ -50,6 +54,10 @@ html[data-theme="dark"] {
     --surface-border: rgba(255, 255, 255, 0.08);
     --surface-bg-soft: rgba(255, 255, 255, 0.04);
     --surface-bg-strong: rgba(28, 28, 30, 0.96);
+    --settings-card-bg: rgba(28, 28, 30, 0.92);
+    --settings-card-border: rgba(255, 255, 255, 0.06);
+    --settings-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
+    --settings-divider: rgba(255, 255, 255, 0.09);
     --tab-fade-top: rgba(0, 0, 0, 0);
     --tab-fade-mid: rgba(0, 0, 0, 0.72);
     --tab-fade-bottom: rgba(0, 0, 0, 0.96);
@@ -79,6 +87,10 @@ html[data-theme="dracula"] {
     --surface-border: rgba(248, 248, 242, 0.08);
     --surface-bg-soft: rgba(248, 248, 242, 0.05);
     --surface-bg-strong: rgba(41, 42, 54, 0.95);
+    --settings-card-bg: rgba(41, 42, 54, 0.92);
+    --settings-card-border: rgba(248, 248, 242, 0.06);
+    --settings-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
+    --settings-divider: rgba(248, 248, 242, 0.09);
     --tab-fade-top: rgba(25, 26, 33, 0);
     --tab-fade-mid: rgba(25, 26, 33, 0.76);
     --tab-fade-bottom: rgba(25, 26, 33, 0.97);
@@ -108,6 +120,10 @@ html[data-theme="forest"] {
     --surface-border: rgba(238, 246, 238, 0.08);
     --surface-bg-soft: rgba(238, 246, 238, 0.05);
     --surface-bg-strong: rgba(18, 42, 28, 0.95);
+    --settings-card-bg: rgba(18, 42, 28, 0.92);
+    --settings-card-border: rgba(238, 246, 238, 0.06);
+    --settings-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+    --settings-divider: rgba(238, 246, 238, 0.09);
     --tab-fade-top: rgba(16, 34, 23, 0);
     --tab-fade-mid: rgba(16, 34, 23, 0.76);
     --tab-fade-bottom: rgba(16, 34, 23, 0.97);
@@ -137,6 +153,10 @@ html[data-theme="solarized"] {
     --surface-border: rgba(36, 49, 58, 0.1);
     --surface-bg-soft: rgba(36, 49, 58, 0.04);
     --surface-bg-strong: rgba(247, 239, 215, 0.94);
+    --settings-card-bg: rgba(255, 252, 242, 0.88);
+    --settings-card-border: rgba(36, 49, 58, 0.08);
+    --settings-card-shadow: 0 10px 24px rgba(80, 72, 50, 0.08);
+    --settings-divider: rgba(36, 49, 58, 0.12);
     --tab-fade-top: rgba(253, 246, 227, 0);
     --tab-fade-mid: rgba(253, 246, 227, 0.84);
     --tab-fade-bottom: rgba(253, 246, 227, 0.98);
@@ -820,6 +840,10 @@ select {
     padding: 6.5rem 1rem 7rem;
 }
 
+.settings-screen {
+    padding-top: 5.35rem;
+}
+
 .likes-list-screen {
     min-height: 100svh;
     padding: 6.5rem 1rem 7rem;
@@ -833,56 +857,115 @@ select {
     width: min(100%, 32rem);
     margin: 0 auto;
     display: grid;
-    gap: 1rem;
+    gap: 1.15rem;
     min-width: 0;
 }
 
 .search-form-card {
     display: grid;
-    gap: 0;
+    gap: 0.85rem;
     background: transparent;
 }
 
 .search-form-grid {
     display: grid;
-    gap: 0;
+    gap: 0.95rem;
     grid-template-columns: 1fr;
 }
 
 .search-field {
     display: grid;
-    gap: 0.35rem;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--surface-border);
+    gap: 0.5rem;
+    padding: 0;
+    border: 0;
 }
 
 .search-field span {
     color: var(--muted);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
 }
 
 .search-field input {
     width: 100%;
-    min-height: 3rem;
-    padding: 0.85rem 1rem;
-    border: 1px solid var(--screen-border);
-    border-radius: 1rem;
-    background: var(--chip-bg);
+    min-height: 3.25rem;
+    padding: 0.95rem 1.05rem;
+    border: 1px solid var(--settings-card-border);
+    border-radius: 1.05rem;
+    background: var(--settings-card-bg);
     color: var(--paper);
+    font-size: 1rem;
+    line-height: 1.25;
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, var(--paper) 4%, transparent),
+        0 1px 2px color-mix(in srgb, var(--shadow-strong) 24%, transparent);
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
+}
+
+.search-field input::placeholder {
+    color: color-mix(in srgb, var(--paper) 42%, transparent);
+}
+
+.search-field input:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--settings-card-border));
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--paper) 4%, transparent);
 }
 
 .search-submit {
-    min-height: 3.2rem;
-    justify-self: start;
-    margin-top: 1rem;
-    padding: 0.85rem 1.1rem;
-    border: 0;
-    border-radius: 999px;
-    background: var(--accent);
+    min-height: 3.35rem;
+    justify-self: stretch;
+    width: 100%;
+    margin-top: 0.4rem;
+    padding: 0.9rem 1.35rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 72%, white 28%);
+    border-radius: 1.15rem;
+    background:
+        linear-gradient(to bottom, color-mix(in srgb, var(--accent) 88%, white 12%), var(--accent));
     color: #ffffff;
     font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+    text-align: center;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 6px 16px color-mix(in srgb, var(--accent) 22%, transparent);
+    transition:
+        transform 0.18s ease,
+        background 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        filter 0.18s ease;
+}
+
+.search-submit:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        0 10px 20px color-mix(in srgb, var(--accent) 26%, transparent);
+    filter: saturate(1.02);
+}
+
+.search-submit:active {
+    transform: translateY(0);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 4px 10px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.search-submit:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 6px 16px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .search-error {
@@ -1044,7 +1127,7 @@ select {
 }
 
 .settings-section + .settings-section {
-    margin-top: 2rem;
+    margin-top: 1.35rem;
 }
 
 .settings-page-transition {
@@ -1073,20 +1156,33 @@ select {
     text-transform: uppercase;
 }
 
+.settings-section-body {
+    overflow: hidden;
+    border: 1px solid var(--settings-card-border);
+    border-radius: 1.45rem;
+    background: var(--settings-card-bg);
+    box-shadow: none;
+    backdrop-filter: blur(18px);
+}
+
 .info-row {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--surface-border);
+    gap: 0.28rem;
+    padding: 0.66rem 1rem;
+    border-bottom: 1px solid var(--settings-divider);
 }
 
 .info-row:first-child {
-    padding-top: 0;
+    padding-top: 0.66rem;
 }
 
 .settings-section-body > .info-row:first-child {
-    padding-top: 0;
+    padding-top: 0.66rem;
+}
+
+.settings-section-body > .info-row:last-child {
+    border-bottom: 0;
 }
 
 .info-row h3,
@@ -1100,6 +1196,17 @@ select {
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
+}
+
+.settings-label-row-inline {
+    justify-content: flex-start;
+}
+
+.settings-install-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.9rem;
 }
 
 .info-row h3 {
@@ -1128,7 +1235,7 @@ select {
     align-items: center;
     justify-content: space-between;
     gap: 0.9rem;
-    padding: 0.2rem 0;
+    padding: 0.15rem 0;
     border: 0;
     background: transparent;
     color: var(--paper);
@@ -1144,7 +1251,7 @@ select {
 .settings-select-label {
     display: inline-flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.9rem;
     min-width: 0;
 }
 
@@ -1152,14 +1259,55 @@ select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.15rem;
-    height: 1.15rem;
-    color: color-mix(in srgb, var(--paper) 82%, transparent);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    color: #ffffff;
     flex: 0 0 auto;
+}
+
+.settings-select-icon .action-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.settings-select-icon-neutral {
+    background: var(--accent);
+}
+
+.settings-select-icon-gray {
+    background: var(--accent);
+}
+
+.settings-select-icon-blue {
+    background: var(--accent);
+}
+
+.settings-select-icon-orange {
+    background: var(--accent);
+}
+
+.settings-select-icon-green {
+    background: var(--accent);
+}
+
+.settings-select-icon-pink {
+    background: var(--accent);
 }
 
 .settings-select-inline {
     padding: 0;
+}
+
+.settings-row-inline .settings-select,
+.settings-row-with-icon .settings-static {
+    min-height: 2.2rem;
+}
+
+.settings-row-inline .settings-select-label > span:last-child,
+.settings-label-row-inline .settings-select-label > span:last-child {
+    font-size: 1.06rem;
+    font-weight: 500;
 }
 
 .settings-value-badge {
@@ -1186,9 +1334,9 @@ select {
     width: 100%;
     min-height: 3rem;
     padding: 0.85rem 1rem;
-    border: 1px solid var(--screen-border);
-    border-radius: 1rem;
-    background: var(--chip-bg);
+    border: 1px solid var(--settings-divider);
+    border-radius: 0.95rem;
+    background: color-mix(in srgb, var(--bg) 42%, white 58%);
     color: var(--paper);
 }
 
@@ -1198,7 +1346,7 @@ select {
     align-items: center;
     justify-content: space-between;
     gap: 0.9rem;
-    padding: 0.2rem 0;
+    padding: 0.1rem 0;
     color: var(--paper);
     font-size: 1rem;
     text-align: left;
@@ -1207,6 +1355,50 @@ select {
 .settings-static span {
     color: var(--paper);
     font-weight: 500;
+}
+
+.settings-row-with-icon .settings-static {
+    padding-left: 2.9rem;
+}
+
+.settings-helper-text {
+    font-size: 0.88rem;
+    line-height: 1.4;
+    color: var(--muted);
+}
+
+.settings-install-row {
+    gap: 0.5rem;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+
+.settings-install-row .settings-select-label > span:last-child {
+    font-size: 1.02rem;
+    font-weight: 600;
+}
+
+.settings-install-row .settings-static {
+    min-height: auto;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.settings-install-pill-row span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.2rem 0.85rem;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.96rem;
+    font-weight: 700;
+}
+
+.settings-install-row .settings-helper-text {
+    padding-left: 0;
+    max-width: 30ch;
 }
 
 .tab-scroll {
@@ -1963,6 +2155,10 @@ select {
         padding: 6rem 1rem 6rem;
     }
 
+    .settings-screen {
+        padding-top: 4.9rem;
+    }
+
     .likes-list,
     .search-shell,
     .search-results-modal,
@@ -1985,7 +2181,7 @@ select {
     }
 
     .search-field {
-        padding: 0.8rem 0;
+        gap: 0.45rem;
     }
 
     .search-field input,
@@ -2000,10 +2196,26 @@ select {
         margin-top: 0.8rem;
         padding: 0.78rem 1rem;
         font-size: 0.92rem;
+        border-radius: 1rem;
     }
 
     .info-row {
-        padding: 0.85rem 0;
+        gap: 0.34rem;
+        padding: 0.82rem 1rem;
+    }
+
+    .settings-section-body > .info-row:first-child {
+        padding-top: 0.82rem;
+    }
+
+    .settings-row-inline .settings-select,
+    .settings-row-with-icon .settings-static {
+        min-height: 2.4rem;
+    }
+
+    .settings-install-row {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
     }
 
     .info-row h3 {
