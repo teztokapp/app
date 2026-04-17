@@ -96,6 +96,34 @@ function ScholarIcon() {
   );
 }
 
+function FilterIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="action-icon">
+      <path
+        d="M4 6h16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 12h10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 18h4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 const previewAbstract = (text, expanded) => {
   if (expanded || text.length < 140) {
     return text;
@@ -956,6 +984,119 @@ function WheelPickerSheet({
   );
 }
 
+function FeedFilterSheet({
+  t,
+  open,
+  filterLabel,
+  yearOptions,
+  selectedYearId,
+  onSelectYear,
+  disciplineOptions,
+  selectedDisciplineId,
+  onSelectDiscipline,
+  searchPlaceholder,
+  emptyMessage,
+  onClose,
+  onSelectHaptic,
+}) {
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+    }
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
+
+  const normalizedQuery = normalizePickerText(query);
+  const visibleOptions = disciplineOptions.filter((option) => {
+    if (option.id === "all") {
+      return true;
+    }
+
+    return !normalizedQuery || normalizePickerText(option.label).includes(normalizedQuery);
+  });
+
+  return (
+    <div className="sheet-backdrop picker-backdrop" onClick={onClose} aria-hidden="true">
+      <section
+        className="discipline-picker filter-sheet"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("picker.filtersTitle")}
+      >
+        <div className="sheet-handle" />
+        <div className="picker-header">
+          <div>
+            <p className="info-kicker">{t("picker.filtersKicker")}</p>
+            <h3>{t("picker.filtersTitle")}</h3>
+          </div>
+          <button type="button" className="sheet-close" onClick={onClose}>
+            {t("picker.done")}
+          </button>
+        </div>
+
+        <div className="filter-section">
+          <div className="filter-section-header">
+            <p>{t("settings.year")}</p>
+          </div>
+          <div className="filter-chip-row" role="radiogroup" aria-label={t("settings.year")}>
+            {yearOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                role="radio"
+                aria-checked={selectedYearId === option.id}
+                className={selectedYearId === option.id ? "filter-chip active" : "filter-chip"}
+                onClick={() => {
+                  onSelectHaptic();
+                  onSelectYear(option.id);
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="filter-section">
+          <div className="filter-section-header">
+            <p>{filterLabel}</p>
+          </div>
+          <input
+            className="picker-search"
+            type="search"
+            placeholder={searchPlaceholder}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <div className="picker-list filter-topic-list">
+            {visibleOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={option.id === selectedDisciplineId ? "picker-item active" : "picker-item"}
+                onClick={() => {
+                  onSelectHaptic();
+                  onSelectDiscipline(option.id);
+                }}
+              >
+                <span>{option.label}</span>
+                {option.id === selectedDisciplineId ? <strong>{t("picker.selected")}</strong> : null}
+              </button>
+            ))}
+            {visibleOptions.length === 0 ? <div className="picker-empty">{emptyMessage}</div> : null}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function DisciplinePickerModal({
   t,
   open,
@@ -1485,6 +1626,7 @@ export default function App() {
   const [searchEmptyMessage, setSearchEmptyMessage] = useState("");
   const [searchResultsOpen, setSearchResultsOpen] = useState(false);
   const [settingsActiveSection, setSettingsActiveSection] = useState(null);
+  const [feedFilterOpen, setFeedFilterOpen] = useState(false);
   const [disciplineOptions, setDisciplineOptions] = useState([
     {
       id: "all",
@@ -2273,6 +2415,11 @@ export default function App() {
           return;
         }
 
+        if (feedFilterOpen) {
+          setFeedFilterOpen(false);
+          return;
+        }
+
         if (disciplinePickerOpen) {
           setDisciplinePickerOpen(false);
           return;
@@ -2383,6 +2530,7 @@ export default function App() {
     visibleFeed,
     activeAbstractId,
     settingsPicker,
+    feedFilterOpen,
     disciplinePickerOpen,
     aboutOpen,
     searchResultsOpen,
@@ -2594,22 +2742,14 @@ export default function App() {
           <div className="header-actions">
             <button
               type="button"
-              className="topic-select"
+              className="topic-select topic-select-icon"
               onClick={() => {
                 fireSelectionHaptic();
-                setSettingsPicker("year");
+                setFeedFilterOpen(true);
               }}
-              aria-label={t("picker.filterBy", { label: t("settings.year") })}
+              aria-label={t("picker.filtersTitle")}
             >
-              <span>{year === "all" ? t("settings.year") : year}</span>
-            </button>
-            <button
-              type="button"
-              className="topic-select"
-              onClick={handleOpenDisciplinePicker}
-              aria-label={t("picker.filterBy", { label: backendMeta.filterLabel })}
-            >
-              <span>{activeDisciplineOption?.label ?? backendMeta.allFilterLabel}</span>
+              <FilterIcon />
             </button>
           </div>
         ) : null}
@@ -2826,6 +2966,21 @@ export default function App() {
       ) : null}
 
       <BottomTabBar activeTab={activeTab} onSelect={handleTabSelect} tabs={tabs} />
+      <FeedFilterSheet
+        t={t}
+        open={feedFilterOpen}
+        filterLabel={backendMeta.filterLabelPlural}
+        yearOptions={yearOptions}
+        selectedYearId={year}
+        onSelectYear={setYear}
+        disciplineOptions={disciplineOptions}
+        selectedDisciplineId={activeDisciplineId}
+        onSelectDiscipline={setActiveDisciplineId}
+        searchPlaceholder={backendMeta.filterSearchPlaceholder}
+        emptyMessage={backendMeta.filterEmptyMessage}
+        onClose={() => setFeedFilterOpen(false)}
+        onSelectHaptic={fireSelectionHaptic}
+      />
       <DisciplinePickerModal
         t={t}
         open={disciplinePickerOpen}

@@ -329,6 +329,13 @@ select {
     white-space: nowrap;
 }
 
+.topic-select-icon {
+    justify-content: center;
+    width: 2.2rem;
+    min-width: 2.2rem;
+    min-height: 2.2rem;
+}
+
 .action,
 .ghost-button,
 .loading-strip {
@@ -1213,6 +1220,53 @@ select {
     margin: 0.25rem 0 0;
     font-size: 1.15rem;
     letter-spacing: -0.02em;
+}
+
+.filter-sheet {
+    display: grid;
+    gap: 1rem;
+}
+
+.filter-section {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.filter-section-header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.filter-chip-row {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+}
+
+.filter-chip {
+    flex: 0 0 auto;
+    min-height: 2.15rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--screen-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--paper);
+}
+
+.filter-chip.active {
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--screen-border));
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.filter-topic-list {
+    max-height: min(42svh, 24rem);
 }
 
 .picker-search {
