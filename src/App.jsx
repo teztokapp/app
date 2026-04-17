@@ -1370,8 +1370,15 @@ function DisciplinePickerModal({
 
 function AbstractSheet({ thesis, open, onClose, t }) {
   const { isRendered, isClosing } = useModalPresence(open);
+  const [displayThesis, setDisplayThesis] = useState(thesis);
 
-  if (!isRendered) {
+  useEffect(() => {
+    if (thesis) {
+      setDisplayThesis(thesis);
+    }
+  }, [thesis]);
+
+  if (!isRendered || !displayThesis) {
     return null;
   }
 
@@ -1390,14 +1397,14 @@ function AbstractSheet({ thesis, open, onClose, t }) {
       >
         <div className="sheet-handle" />
         <div className="sheet-header">
-          <p>{thesis.author}</p>
+          <p>{displayThesis.author}</p>
           <button type="button" className="sheet-close" onClick={onClose}>
             {t("picker.done")}
           </button>
         </div>
-        <h3>{thesis.title}</h3>
+        <h3>{displayThesis.title}</h3>
         <div className="sheet-body">
-          <p>{thesis.abstract}</p>
+          <p>{displayThesis.abstract}</p>
         </div>
       </section>
     </div>
