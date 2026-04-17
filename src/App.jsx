@@ -260,6 +260,29 @@ const previewAbstract = (text, expanded) => {
   return `${text.slice(0, 140).trim()}...`;
 };
 
+const previewTitle = (text, maxLength = 140) => {
+  const normalized = String(text ?? "").trim();
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength).trim()}...`;
+};
+
+const previewAuthors = (text, maxAuthors = 3) => {
+  const authors = String(text ?? "")
+    .split(",")
+    .map((author) => author.trim())
+    .filter(Boolean);
+
+  if (authors.length <= maxAuthors) {
+    return authors.join(", ");
+  }
+
+  return `${authors.slice(0, maxAuthors).join(", ")}, et al.`;
+};
+
 function useModalPresence(open) {
   const [isRendered, setIsRendered] = useState(open);
   const [isClosing, setIsClosing] = useState(false);
@@ -1716,6 +1739,9 @@ function ThesisCard({
   const hasAbstract = Boolean(String(thesis.abstract ?? "").trim());
   const hasPdf = Boolean(String(pdfUrl ?? "").trim());
   const hasScholar = Boolean(String(scholarUrl ?? "").trim());
+  const cardTitle = previewTitle(thesis.title, 170);
+  const cardAuthors = previewAuthors(thesis.author, 3);
+  const cardAbstract = previewAbstract(thesis.abstract, false);
 
   return (
     <article
@@ -1742,8 +1768,8 @@ function ThesisCard({
         <p className="screen-kicker">
           {thesis.university} / {thesis.department}
         </p>
-        <h1>{thesis.title}</h1>
-        <p className="author-line">{thesis.author}</p>
+        <h1 title={thesis.title}>{cardTitle}</h1>
+        <p className="author-line" title={thesis.author}>{cardAuthors}</p>
       </div>
 
       <aside className="screen-side-actions">
@@ -1809,8 +1835,8 @@ function ThesisCard({
       <div className="screen-bottom">
         {hasAbstract ? (
           <div className="abstract-panel">
-            <p className="abstract-text">
-              {previewAbstract(thesis.abstract, false)}
+            <p className="abstract-text" title={thesis.abstract}>
+              {cardAbstract}
             </p>
             <button
               className="ghost-button"

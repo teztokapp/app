@@ -1,7 +1,7 @@
 {
-  "name": "TezTok: Browse and save theses",
+  "name": "TezTok: Browse and save academia",
   "short_name": "TezTok",
-  "description": "A mobile-first thesis browser with swipe controls.",
+  "description": "A mobile-first academic browser with swipe controls.",
   "lang": "en",
   "id": "/",
   "start_url": "/",
@@ -12,7 +12,7 @@
   "theme_color": "#0b1020",
   "protocol_handlers": [
     {
-      "protocol": "web+teztok",
+      "protocol": "teztok",
       "url": "/?open=%s"
     }
   ],

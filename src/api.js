@@ -4,12 +4,14 @@ export const BACKEND_OPENALEX = "openalex";
 export const BACKEND_CROSSREF = "crossref";
 export const BACKEND_SEMANTIC_SCHOLAR = "semantic-scholar";
 export const BACKEND_CORE = "core";
+export const BACKEND_PUBMED = "pubmed";
 export const BACKEND_YOKTEZ = "yoktez";
 export const DEFAULT_BACKEND = BACKEND_OPENALEX;
 
 export const BACKEND_OPTIONS = [
   { id: BACKEND_OPENALEX, label: "OpenAlex" },
   { id: BACKEND_CROSSREF, label: "Crossref" },
+  { id: BACKEND_PUBMED, label: "PubMed" },
   { id: BACKEND_YOKTEZ, label: "YÖK Tez" },
 ];
 
@@ -26,6 +28,7 @@ export function getBackendOptions(locale = DEFAULT_LOCALE) {
     [BACKEND_SEMANTIC_SCHOLAR]: "providers.names.semanticScholar",
     [BACKEND_CORE]: "providers.names.core",
     [BACKEND_CROSSREF]: "providers.names.crossref",
+    [BACKEND_PUBMED]: "providers.names.pubmed",
     [BACKEND_YOKTEZ]: "providers.names.yoktez",
   };
 
@@ -49,6 +52,11 @@ const CROSSREF_API_URL = (
   "https://api.crossref.org/works"
 ).trim();
 
+const CROSSREF_TYPES_URL = (
+  import.meta.env.VITE_CROSSREF_TYPES_URL ??
+  "https://api.crossref.org/types"
+).trim();
+
 const SEMANTIC_SCHOLAR_API_URL = (
   import.meta.env.VITE_SEMANTIC_SCHOLAR_API_URL ??
   "https://api.semanticscholar.org/graph/v1/paper/search"
@@ -57,6 +65,15 @@ const SEMANTIC_SCHOLAR_API_URL = (
 const CORE_API_URL = (
   import.meta.env.VITE_CORE_API_URL ??
   "https://api.core.ac.uk/v3/search/works/"
+).trim();
+
+const PUBMED_EUTILS_BASE_URL = (
+  import.meta.env.VITE_PUBMED_EUTILS_BASE_URL ??
+  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+).trim().replace(/\/$/, "");
+const PUBMED_MESH_SPARQL_URL = (
+  import.meta.env.VITE_PUBMED_MESH_SPARQL_URL ??
+  "https://id.nlm.nih.gov/mesh/sparql"
 ).trim();
 const UNSPLASH_ACCESS_KEY = (
   import.meta.env.VITE_UNSPLASH_ACCESS_KEY ??
@@ -91,13 +108,6 @@ const OPENALEX_FILTER_OPTIONS = [
 
 const CROSSREF_FILTER_OPTIONS = [
   { id: "all", labelKey: "providers.crossref.all", fallbackLabel: "Tüm Crossref", query: "", type: "" },
-  { id: "preprint", labelKey: "providers.common.preprint", fallbackLabel: "Preprint", query: "", type: "posted-content" },
-  { id: "ai", labelKey: "providers.common.ai", fallbackLabel: "Yapay Zeka", query: "artificial intelligence", type: "" },
-  { id: "ml", labelKey: "providers.common.ml", fallbackLabel: "Makine Öğrenmesi", query: "machine learning", type: "" },
-  { id: "nlp", labelKey: "providers.common.nlp", fallbackLabel: "Doğal Dil İşleme", query: "natural language processing", type: "" },
-  { id: "cv", labelKey: "providers.common.cv", fallbackLabel: "Bilgisayarlı Görü", query: "computer vision", type: "" },
-  { id: "biology", labelKey: "providers.common.biology", fallbackLabel: "Biyoloji", query: "biology", type: "" },
-  { id: "economics", labelKey: "providers.common.economics", fallbackLabel: "Ekonomi", query: "economics", type: "" },
 ];
 
 const SEMANTIC_SCHOLAR_FILTER_OPTIONS = [
@@ -118,6 +128,10 @@ const CORE_FILTER_OPTIONS = [
   { id: "cv", labelKey: "providers.common.cv", fallbackLabel: "Bilgisayarlı Görü", query: "\"computer vision\"" },
   { id: "biology", labelKey: "providers.common.biology", fallbackLabel: "Biyoloji", query: "biology" },
   { id: "economics", labelKey: "providers.common.economics", fallbackLabel: "Ekonomi", query: "economics" },
+];
+
+const PUBMED_FILTER_OPTIONS = [
+  { id: "all", labelKey: "providers.pubmed.all", fallbackLabel: "Tüm PubMed", term: "" },
 ];
 
 function getTranslatorForLocale(locale) {
@@ -175,7 +189,23 @@ export function getBackendMetadata(backend, locale = DEFAULT_LOCALE) {
     };
   }
   if (backend === BACKEND_CROSSREF) {
-    return getClientProviderMetadata(BACKEND_CROSSREF, t("providers.names.crossref"), locale);
+    return {
+      id: BACKEND_CROSSREF,
+      label: t("providers.names.crossref"),
+      filterLabel: t("providers.crossref.filterLabel"),
+      filterLabelPlural: t("providers.crossref.filterLabelPlural"),
+      filterSearchPlaceholder: t("providers.crossref.filterSearchPlaceholder"),
+      filterEmptyMessage: t("providers.crossref.filterEmptyMessage"),
+      allFilterLabel: t("providers.crossref.all"),
+      feedErrorHint: t("providers.client.feedErrorHint", { label: t("providers.names.crossref") }),
+      supportsBackgroundImages: true,
+      requiresCustomServer: false,
+      clientOnly: true,
+    };
+  }
+
+  if (backend === BACKEND_PUBMED) {
+    return getClientProviderMetadata(BACKEND_PUBMED, t("providers.names.pubmed"), locale);
   }
 
   if (backend === BACKEND_SEMANTIC_SCHOLAR) {
@@ -476,10 +506,23 @@ function getOpenAlexFilterById(filterId = "all") {
 }
 
 function getCrossrefFilterById(filterId = "all") {
-  return (
-    CROSSREF_FILTER_OPTIONS.find((option) => option.id === filterId) ??
-    CROSSREF_FILTER_OPTIONS[0]
-  );
+  const matched = CROSSREF_FILTER_OPTIONS.find((option) => option.id === filterId);
+
+  if (matched) {
+    return matched;
+  }
+
+  if (filterId && filterId !== "all") {
+    return {
+      id: filterId,
+      labelKey: "",
+      fallbackLabel: filterId,
+      query: "",
+      type: filterId,
+    };
+  }
+
+  return CROSSREF_FILTER_OPTIONS[0];
 }
 
 function getSemanticScholarFilterById(filterId = "all") {
@@ -494,6 +537,27 @@ function getCoreFilterById(filterId = "all") {
     CORE_FILTER_OPTIONS.find((option) => option.id === filterId) ??
     CORE_FILTER_OPTIONS[0]
   );
+}
+
+function getPubMedFilterById(filterId = "all") {
+  const matched = PUBMED_FILTER_OPTIONS.find((option) => option.id === filterId);
+
+  if (matched) {
+    return matched;
+  }
+
+  if (String(filterId).startsWith("mesh:")) {
+    const label = decodeURIComponent(String(filterId).slice(5));
+
+    return {
+      id: filterId,
+      labelKey: "",
+      fallbackLabel: label,
+      term: `"${label.replace(/"/g, '\\"')}"[MeSH Terms]`,
+    };
+  }
+
+  return PUBMED_FILTER_OPTIONS[0];
 }
 
 function readText(parent, namespace, tagName) {
@@ -589,6 +653,20 @@ function buildHeaders(extraHeaders = {}) {
   );
 }
 
+function buildPubMedUrl(path, params = {}) {
+  const url = new URL(`${PUBMED_EUTILS_BASE_URL}/${path}`);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+
+    url.searchParams.set(key, String(value));
+  });
+
+  return url.toString();
+}
+
 function buildSearchTerms(criteria = {}) {
   return [
     normalizeWhitespace(criteria.query),
@@ -596,6 +674,396 @@ function buildSearchTerms(criteria = {}) {
     normalizeWhitespace(criteria.author),
     normalizeWhitespace(criteria.source),
   ].filter(Boolean);
+}
+
+function buildPubMedDateTerm(year) {
+  const normalized = normalizeWhitespace(year);
+
+  if (!normalized || normalized === "all") {
+    return "";
+  }
+
+  if (/^\d{4}:\d{4}$/.test(normalized)) {
+    const [startYear, endYear] = normalized.split(":");
+    return `(${startYear}/01/01:${endYear}/12/31[Date - Publication])`;
+  }
+
+  if (/^\d{4}$/.test(normalized)) {
+    return `(${normalized}/01/01:${normalized}/12/31[Date - Publication])`;
+  }
+
+  return normalized;
+}
+
+function buildPubMedTerm({ query = "", title = "", author = "", source = "", year = "", filterId = "all", contentLang = "all", requireAbstract = false } = {}) {
+  const terms = [];
+  const filter = getPubMedFilterById(filterId);
+
+  if (normalizeWhitespace(query)) {
+    terms.push(`(${normalizeWhitespace(query)}[Title/Abstract])`);
+  }
+
+  if (normalizeWhitespace(title)) {
+    terms.push(`(${normalizeWhitespace(title)}[Title])`);
+  }
+
+  if (normalizeWhitespace(author)) {
+    terms.push(`(${normalizeWhitespace(author)}[Author - Full])`);
+  }
+
+  if (normalizeWhitespace(source)) {
+    terms.push(`(${normalizeWhitespace(source)}[Journal])`);
+  }
+
+  if (filter.term) {
+    terms.push(`(${filter.term})`);
+  }
+
+  if (contentLang === "english") {
+    terms.push("english[Language]");
+  }
+
+  const yearTerm = buildPubMedDateTerm(year);
+
+  if (yearTerm) {
+    terms.push(yearTerm);
+  }
+
+  terms.push("\"journal article\"[Publication Type]");
+
+  if (requireAbstract) {
+    terms.push("hasabstract[text]");
+  }
+
+  return terms.join(" AND ");
+}
+
+async function fetchPubMed(url, parseResponse, retries = 2) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const response = await fetch(url);
+
+    if (response.ok) {
+      return parseResponse(response);
+    }
+
+    const shouldRetry =
+      response.status === 429 ||
+      (response.status >= 500 && response.status <= 599);
+
+    if (!shouldRetry || attempt === retries) {
+      throw new Error(`PubMed request failed: ${response.status}`);
+    }
+
+    lastError = new Error(`PubMed request failed: ${response.status}`);
+    await new Promise((resolve) => {
+      window.setTimeout(resolve, 350 * (attempt + 1));
+    });
+  }
+
+  throw lastError ?? new Error("PubMed request failed.");
+}
+
+async function requestPubMedIds({
+  term = "",
+  retmax = 20,
+  retstart = 0,
+  sort = "relevance",
+} = {}) {
+  const data = await fetchPubMed(buildPubMedUrl("esearch.fcgi", {
+    db: "pubmed",
+    retmode: "json",
+    term,
+    retmax,
+    retstart,
+    sort,
+  }), (response) => response.json());
+  const result = data.esearchresult ?? {};
+
+  return {
+    ids: result.idlist ?? [],
+    total: Number(result.count ?? 0),
+  };
+}
+
+async function requestPubMedArticles(ids = []) {
+  if (!ids.length) {
+    return [];
+  }
+
+  const xmlText = await fetchPubMed(buildPubMedUrl("efetch.fcgi", {
+    db: "pubmed",
+    id: ids.join(","),
+    retmode: "xml",
+  }), (response) => response.text());
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlText, "text/xml");
+
+  if (xml.getElementsByTagName("parsererror").length > 0) {
+    throw new Error("PubMed response could not be parsed.");
+  }
+
+  const items = Array.from(xml.getElementsByTagName("PubmedArticle")).map(normalizePubMedArticle);
+
+  if (items.length > 0) {
+    return items;
+  }
+
+  return requestPubMedSummaries(ids);
+}
+
+function readPubMedText(parent, tagName) {
+  return normalizeWhitespace(parent?.getElementsByTagName(tagName)[0]?.textContent ?? "");
+}
+
+function buildPubMedAbstract(articleNode) {
+  const abstractNodes = Array.from(articleNode?.getElementsByTagName("AbstractText") ?? []);
+
+  return normalizeAbstract(
+    abstractNodes
+      .map((node) => {
+        const label = normalizeWhitespace(node.getAttribute("Label") ?? "");
+        const text = normalizeWhitespace(node.textContent ?? "");
+
+        if (!text) {
+          return "";
+        }
+
+        return label ? `${label}: ${text}` : text;
+      })
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
+function buildPubMedAuthors(articleNode) {
+  return buildAuthorLabel(
+    Array.from(articleNode?.getElementsByTagName("Author") ?? [])
+      .map((authorNode) => {
+        const collectiveName = readPubMedText(authorNode, "CollectiveName");
+
+        if (collectiveName) {
+          return collectiveName;
+        }
+
+        return normalizeWhitespace(
+          [
+            readPubMedText(authorNode, "ForeName"),
+            readPubMedText(authorNode, "LastName"),
+          ].filter(Boolean).join(" "),
+        );
+      })
+      .filter(Boolean),
+  );
+}
+
+function buildPubMedKeywords(citationNode, articleNode) {
+  return pickKeywords([
+    ...Array.from(citationNode?.getElementsByTagName("Keyword") ?? []).map((node) => node.textContent ?? ""),
+    ...Array.from(citationNode?.getElementsByTagName("DescriptorName") ?? []).map((node) => node.textContent ?? ""),
+    ...Array.from(articleNode?.getElementsByTagName("PublicationType") ?? []).map((node) => node.textContent ?? ""),
+  ]);
+}
+
+function extractPubMedIds(pubmedDataNode) {
+  return Array.from(pubmedDataNode?.getElementsByTagName("ArticleId") ?? []).reduce(
+    (accumulator, node) => {
+      const type = normalizeWhitespace(node.getAttribute("IdType") ?? "").toLowerCase();
+      const value = normalizeWhitespace(node.textContent ?? "");
+
+      if (type && value) {
+        accumulator[type] = value;
+      }
+
+      return accumulator;
+    },
+    {},
+  );
+}
+
+function normalizePubMedArticle(articleRoot) {
+  const citationNode = articleRoot.getElementsByTagName("MedlineCitation")[0];
+  const articleNode = citationNode?.getElementsByTagName("Article")[0];
+  const pubmedDataNode = articleRoot.getElementsByTagName("PubmedData")[0];
+  const pmid = readPubMedText(citationNode, "PMID");
+  const articleIds = extractPubMedIds(pubmedDataNode);
+  const journalTitle =
+    readPubMedText(articleNode, "Title") ||
+    readPubMedText(citationNode, "MedlineTA") ||
+    "PubMed";
+  const primaryTopic =
+    readPubMedText(citationNode, "DescriptorName") ||
+    readPubMedText(citationNode, "Keyword") ||
+    readPubMedText(articleNode, "PublicationType") ||
+    "PubMed";
+  const pmcId = normalizeWhitespace(articleIds.pmc ?? "");
+
+  return {
+    id: pmid || articleIds.doi || readPubMedText(articleNode, "ArticleTitle"),
+    title: normalizeTitle(readPubMedText(articleNode, "ArticleTitle")),
+    abstract: buildPubMedAbstract(articleNode),
+    author: buildPubMedAuthors(articleNode),
+    university: journalTitle,
+    department: normalizeWhitespace(primaryTopic) || "PubMed",
+    year: resolveYear(
+      readPubMedText(articleNode, "Year"),
+      readPubMedText(citationNode, "Year"),
+      readPubMedText(pubmedDataNode, "Year"),
+    ),
+    pdfUrl: pmcId ? `https://pmc.ncbi.nlm.nih.gov/articles/${pmcId}/pdf/` : "",
+    detailPageUrl: pmid ? `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` : "",
+    keywords: buildPubMedKeywords(citationNode, articleNode),
+  };
+}
+
+function extractPubMedSummaryIds(summary = {}) {
+  return Array.isArray(summary.articleids)
+    ? summary.articleids.reduce((accumulator, item) => {
+      const type = normalizeWhitespace(item?.idtype ?? "").toLowerCase();
+      const value = normalizeWhitespace(item?.value ?? "");
+
+      if (type && value) {
+        accumulator[type] = value;
+      }
+
+      return accumulator;
+    }, {})
+    : {};
+}
+
+function normalizePubMedSummary(summary = {}) {
+  const articleIds = extractPubMedSummaryIds(summary);
+  const pmid = normalizeWhitespace(summary.uid ?? "");
+  const pmcId = normalizeWhitespace(articleIds.pmc ?? "");
+
+  return {
+    id: pmid || articleIds.doi || normalizeTitle(summary.title ?? ""),
+    title: normalizeTitle(summary.title ?? ""),
+    abstract: "",
+    author: buildAuthorLabel((summary.authors ?? []).map((author) => author?.name)),
+    university:
+      normalizeWhitespace(summary.fulljournalname ?? summary.source ?? "PubMed") || "PubMed",
+    department:
+      normalizeWhitespace((summary.pubtype ?? [])[0] ?? "PubMed") || "PubMed",
+    year: resolveYear(summary.pubdate, summary.epubdate, summary.sortpubdate),
+    pdfUrl: pmcId ? `https://pmc.ncbi.nlm.nih.gov/articles/${pmcId}/pdf/` : "",
+    detailPageUrl: pmid ? `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` : "",
+    keywords: pickKeywords(summary.pubtype ?? []),
+  };
+}
+
+async function requestPubMedSummaries(ids = []) {
+  if (!ids.length) {
+    return [];
+  }
+
+  const data = await fetchPubMed(buildPubMedUrl("esummary.fcgi", {
+    db: "pubmed",
+    id: ids.join(","),
+    retmode: "json",
+  }), (response) => response.json());
+  const result = data.result ?? {};
+  const orderedIds = Array.isArray(result.uids) ? result.uids : ids;
+
+  return orderedIds
+    .map((id) => normalizePubMedSummary(result[id] ?? {}))
+    .filter((item) => item.id && item.title);
+}
+
+async function requestPubMedDisciplines() {
+  const query = [
+    "PREFIX meshv: <http://id.nlm.nih.gov/mesh/vocab#>",
+    "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>",
+    "SELECT DISTINCT ?label ?tree WHERE {",
+    "  ?d a meshv:TopicalDescriptor .",
+    "  ?d meshv:active 1 .",
+    "  ?d rdfs:label ?label .",
+    "  ?d meshv:treeNumber ?tn .",
+    "  ?tn rdfs:label ?tree .",
+    "  FILTER(LANG(?label) = 'en') .",
+    "  FILTER(REGEX(STR(?tree), '^[A-Z][0-9][0-9]$')) .",
+    "}",
+    "ORDER BY ?label",
+  ].join("\n");
+  const url = new URL(PUBMED_MESH_SPARQL_URL);
+
+  url.searchParams.set("query", query);
+  url.searchParams.set("format", "application/sparql-results+json");
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "application/sparql-results+json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`PubMed MeSH disciplines failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const items = (data?.results?.bindings ?? [])
+    .map((item) => normalizeWhitespace(item?.label?.value ?? ""))
+    .filter(Boolean)
+    .map((label) => ({
+      id: `mesh:${encodeURIComponent(label)}`,
+      label,
+      query: label,
+    }));
+
+  return {
+    items: dedupeItemsById(items),
+  };
+}
+
+function mergePubMedItems(summaryItems = [], detailedItems = []) {
+  const detailsById = new Map(detailedItems.map((item) => [item.id, item]));
+
+  return summaryItems.map((item) => {
+    const detail = detailsById.get(item.id);
+
+    if (!detail) {
+      return item;
+    }
+
+    return {
+      ...item,
+      abstract: detail.abstract || item.abstract,
+      pdfUrl: detail.pdfUrl || item.pdfUrl,
+      keywords: detail.keywords?.length ? detail.keywords : item.keywords,
+      department: detail.department || item.department,
+      university: detail.university || item.university,
+      author: detail.author || item.author,
+      year: detail.year || item.year,
+      detailPageUrl: detail.detailPageUrl || item.detailPageUrl,
+    };
+  });
+}
+
+async function requestPubMedSearch(criteria = {}, config = {}) {
+  const limit = Math.min(Math.max(Number(criteria.limit) || 20, 1), 20);
+  const year = criteria.year ?? config.year;
+  const term = buildPubMedTerm({
+    query: criteria.query,
+    title: criteria.title,
+    author: criteria.author,
+    source: criteria.source,
+    year,
+    contentLang: config.contentLang,
+    requireAbstract: false,
+  });
+  const { ids } = await requestPubMedIds({
+    term,
+    retmax: limit,
+    retstart: 0,
+    sort: "relevance",
+  });
+  const summaryItems = await requestPubMedSummaries(ids);
+  const detailedItems = await requestPubMedArticles(ids).catch(() => []);
+
+  return {
+    items: dedupeItemsById(mergePubMedItems(summaryItems, detailedItems)),
+  };
 }
 
 async function requestOpenAlexSearch(criteria = {}, config = {}) {
@@ -781,6 +1249,32 @@ async function requestCrossrefSearch(criteria = {}, config = {}) {
     });
 
   return { items };
+}
+
+async function requestCrossrefTypes() {
+  const response = await fetch(CROSSREF_TYPES_URL, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Crossref types failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const items = (data.message?.items ?? [])
+    .map((item) => ({
+      id: normalizeWhitespace(item.id ?? ""),
+      label: normalizeWhitespace(item.label ?? item.id ?? ""),
+      query: normalizeWhitespace(item.label ?? item.id ?? ""),
+    }))
+    .filter((item) => item.id && item.label)
+    .sort((a, b) => a.label.localeCompare(b.label, "en"));
+
+  return {
+    items,
+  };
 }
 
 async function requestYoktezSearch(criteria = {}, config = {}) {
@@ -1164,6 +1658,38 @@ async function requestCoreFeed({
   };
 }
 
+async function requestPubMedFeed({
+  offset = 0,
+  limit = 4,
+  filterId = "all",
+  contentLang = "all",
+  year = null,
+} = {}) {
+  const currentYear = new Date().getFullYear();
+  const effectiveYear =
+    year && year !== "all"
+      ? year
+      : `${currentYear - 1}:${currentYear + 1}`;
+  const term = buildPubMedTerm({
+    filterId,
+    year: effectiveYear,
+    contentLang,
+    requireAbstract: true,
+  });
+  const { ids, total } = await requestPubMedIds({
+    term,
+    retmax: Math.max(Number(limit) || 4, 1),
+    retstart: Math.max(Number(offset) || 0, 0),
+    sort: "pub date",
+  });
+  const items = await requestPubMedArticles(ids);
+
+  return {
+    items,
+    nextCursor: total > offset + ids.length ? offset + ids.length : offset,
+  };
+}
+
 export function fetchDisciplines(config) {
 
   if (config?.backend === BACKEND_OPENALEX) {
@@ -1179,15 +1705,7 @@ export function fetchDisciplines(config) {
   }
 
   if (config?.backend === BACKEND_CROSSREF) {
-    return Promise.resolve({
-      items: localizeOptions(CROSSREF_FILTER_OPTIONS, config?.locale)
-        .filter((option) => option.id !== "all")
-        .map((option) => ({
-          id: option.id,
-          label: option.label,
-          query: option.query || option.type || option.id,
-        })),
-    });
+    return requestCrossrefTypes();
   }
 
   if (config?.backend === BACKEND_SEMANTIC_SCHOLAR) {
@@ -1212,6 +1730,10 @@ export function fetchDisciplines(config) {
           query: option.query,
         })),
     });
+  }
+
+  if (config?.backend === BACKEND_PUBMED) {
+    return requestPubMedDisciplines();
   }
 
   return requestJson("/api/disciplines", undefined, config);
@@ -1252,6 +1774,15 @@ export function fetchFeedPage(cursor, limit, config) {
       offset: Number(cursor ?? 0),
       limit: Number(limit ?? 4),
       apiKey: config.coreApiKey,
+      contentLang: config.contentLang,
+      year: config.year,
+    });
+  }
+
+  if (config?.backend === BACKEND_PUBMED) {
+    return requestPubMedFeed({
+      offset: Number(cursor ?? 0),
+      limit: Number(limit ?? 4),
       contentLang: config.contentLang,
       year: config.year,
     });
@@ -1304,6 +1835,16 @@ export function fetchDisciplineFeed(discipline, config) {
     });
   }
 
+  if (config?.backend === BACKEND_PUBMED) {
+    return requestPubMedFeed({
+      offset: 0,
+      limit: 20,
+      filterId: discipline,
+      contentLang: config.contentLang,
+      year: config.year,
+    });
+  }
+
   return requestJson("/api/discipline-feed", { discipline, year: config.year }, config);
 }
 
@@ -1349,6 +1890,10 @@ export function searchArticles(criteria, config) {
 
   if (config?.backend === BACKEND_CROSSREF) {
     return requestCrossrefSearch(criteria, config);
+  }
+
+  if (config?.backend === BACKEND_PUBMED) {
+    return requestPubMedSearch(criteria, config);
   }
 
   return requestYoktezSearch(criteria, config);

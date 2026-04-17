@@ -483,6 +483,11 @@ select {
     font-weight: 700;
     letter-spacing: -0.025em;
     text-shadow: 0 2px 20px var(--shadow-strong);
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .author-line {
@@ -490,6 +495,11 @@ select {
     font-size: 0.98rem;
     color: color-mix(in srgb, var(--paper) 90%, transparent);
     text-shadow: 0 1px 16px var(--shadow-strong);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .abstract-panel {
@@ -502,6 +512,11 @@ select {
     color: color-mix(in srgb, var(--paper) 88%, transparent);
     line-height: 1.58;
     text-shadow: 0 1px 18px var(--shadow-strong);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .screen-bottom {

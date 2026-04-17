@@ -44,7 +44,7 @@ Mobile-first academic thesis browsing with a TikTok-style vertical feed. The pro
 ## Features
 
 - Vertical swipe-style thesis feed
-- Multi-source support including OpenAlex, Crossref, and YOKTez
+- Multi-source support including OpenAlex, Crossref, PubMed, and YOKTez
 - Discipline/topic filtering
 - Local likes/bookmarks
 - PWA install and offline caching

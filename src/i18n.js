@@ -13,6 +13,7 @@ const translations = {
         crossref: "Crossref",
         semanticScholar: "Semantic Scholar",
         core: "CORE",
+        pubmed: "PubMed",
         yoktez: "YÖK Tez",
       },
       common: {
@@ -25,6 +26,27 @@ const translations = {
         math: "Matematik",
         statistics: "İstatistik",
         physics: "Fizik",
+        medicine: "Tıp",
+        publicHealth: "Halk Sağlığı",
+        neuroscience: "Nörobilim",
+        genetics: "Genetik",
+        oncology: "Onkoloji",
+        cardiology: "Kardiyoloji",
+        immunology: "İmmünoloji",
+        psychiatry: "Psikiyatri",
+        pharmacology: "Farmakoloji",
+        bioinformatics: "Biyoinformatik",
+        epidemiology: "Epidemiyoloji",
+        microbiology: "Mikrobiyoloji",
+        virology: "Viroloji",
+        pediatrics: "Pediatri",
+        surgery: "Cerrahi",
+        radiology: "Radyoloji",
+        dermatology: "Dermatoloji",
+        endocrinology: "Endokrinoloji",
+        ophthalmology: "Oftalmoloji",
+        nursing: "Hemşirelik",
+        dentistry: "Diş Hekimliği",
         quantBiology: "Kantitatif Biyoloji",
         economics: "Ekonomi",
         biology: "Biyoloji",
@@ -42,12 +64,19 @@ const translations = {
         all: "Tüm Konular",
       },
       crossref: {
+        filterLabel: "İçerik türü",
+        filterLabelPlural: "İçerik türleri",
+        filterSearchPlaceholder: "İçerik türü ara",
+        filterEmptyMessage: "Bu aramayla eşleşen içerik türü yok.",
         all: "Tüm Konular",
       },
       semanticScholar: {
         all: "Tüm Konular",
       },
       core: {
+        all: "Tüm Konular",
+      },
+      pubmed: {
         all: "Tüm Konular",
       },
       yoktez: {
@@ -67,7 +96,8 @@ const translations = {
     },
     app: {
       title: "TezTok",
-      offlineReady: "Çevrimdışı mod: Daha önce açtığın tezler ve sayfalar önbellekten gösteriliyor.",
+      offlineReady:
+        "Çevrimdışı mod: Daha önce açtığın tezler ve sayfalar önbellekten gösteriliyor.",
     },
     tabs: {
       feed: "Akış",
@@ -89,7 +119,7 @@ const translations = {
       iosLabel: "Safari'de ana ekrana ekle",
       iosTitle: "iPhone'a yükleme adımları",
       iosStep1: "Safari'de alttaki Paylaş düğmesine dokun.",
-      iosStep2: "\"Ana Ekrana Ekle\" seçeneğini seç.",
+      iosStep2: '"Ana Ekrana Ekle" seçeneğini seç.',
       iosStep3: "Ekle'ye dokunup uygulamayı ana ekrandan aç.",
     },
     options: {
@@ -140,11 +170,10 @@ const translations = {
       aboutSummary:
         "Uygulamanın sürümünü ve nasıl çalıştığına dair kısa bilgileri gör.",
       aboutBody:
-        "TezTok, tez ve akademik yayınları dikey akış içinde keşfetmeyi kolaylaştıran mobil öncelikli bir okuma deneyimi sunar. Şu anda 3 kaynak aktif: YÖK Tez, OpenAlex ve Crossref. Semantic Scholar ve CORE ise çok yakında gelecek.",
+        "TezTok, akademik yayınları dikey akış içinde keşfetmeyi kolaylaştıran mobil öncelikli bir okuma deneyimi sunar.",
       aboutVersion: "Sürüm {version}",
       aboutSourceLabel: "Kaynaklar",
-      aboutSourceValue:
-        "3 aktif kaynak: YÖK Tez, OpenAlex, Crossref. Semantic Scholar ve CORE çok yakında.",
+      aboutSourceValue: "4 aktif kaynak: YÖK Tez, OpenAlex, Crossref, PubMed.",
       aboutExperienceLabel: "Deneyim",
       aboutExperienceValue: "TikTok tarzı akış, arama ve beğeniler",
       aboutInstallLabel: "Kullanım",
@@ -193,7 +222,8 @@ const translations = {
     },
     search: {
       emptyKicker: "Detaylı makale araması",
-      emptyTitle: "Anahtar kelime, başlık, yazar, kaynak veya yıl ile arama yap.",
+      emptyTitle:
+        "Anahtar kelime, başlık, yazar, kaynak veya yıl ile arama yap.",
       resultsKicker: "Arama sonuçları",
       resultCount: "{count} sonuç",
       submit: "Makaleleri ara",
@@ -209,7 +239,7 @@ const translations = {
         year: "Yıl",
       },
       placeholders: {
-        query: "ör. large language models",
+        query: "ör. büyük dil modelleri",
         title: "Başlıkta ara",
         author: "Yazar adı",
         source: "Dergi veya yayın adı",
@@ -273,6 +303,7 @@ const translations = {
         crossref: "Crossref",
         semanticScholar: "Semantic Scholar",
         core: "CORE",
+        pubmed: "PubMed",
         yoktez: "YÖK Tez",
       },
       common: {
@@ -285,6 +316,27 @@ const translations = {
         math: "Mathematics",
         statistics: "Statistics",
         physics: "Physics",
+        medicine: "Medicine",
+        publicHealth: "Public Health",
+        neuroscience: "Neuroscience",
+        genetics: "Genetics",
+        oncology: "Oncology",
+        cardiology: "Cardiology",
+        immunology: "Immunology",
+        psychiatry: "Psychiatry",
+        pharmacology: "Pharmacology",
+        bioinformatics: "Bioinformatics",
+        epidemiology: "Epidemiology",
+        microbiology: "Microbiology",
+        virology: "Virology",
+        pediatrics: "Pediatrics",
+        surgery: "Surgery",
+        radiology: "Radiology",
+        dermatology: "Dermatology",
+        endocrinology: "Endocrinology",
+        ophthalmology: "Ophthalmology",
+        nursing: "Nursing",
+        dentistry: "Dentistry",
         quantBiology: "Quantitative Biology",
         economics: "Economics",
         biology: "Biology",
@@ -302,12 +354,19 @@ const translations = {
         all: "All topics",
       },
       crossref: {
+        filterLabel: "Content type",
+        filterLabelPlural: "Content types",
+        filterSearchPlaceholder: "Search content type",
+        filterEmptyMessage: "No content type matches this search.",
         all: "All topics",
       },
       semanticScholar: {
         all: "All topics",
       },
       core: {
+        all: "All topics",
+      },
+      pubmed: {
         all: "All topics",
       },
       yoktez: {
@@ -327,7 +386,8 @@ const translations = {
     },
     app: {
       title: "TezTok",
-      offlineReady: "Offline mode: previously opened theses and screens are being served from cache.",
+      offlineReady:
+        "Offline mode: previously opened theses and screens are being served from cache.",
     },
     tabs: {
       feed: "Feed",
@@ -349,7 +409,7 @@ const translations = {
       iosLabel: "Add to Home Screen in Safari",
       iosTitle: "Install on iPhone",
       iosStep1: "Open Safari and tap the Share button.",
-      iosStep2: "Choose \"Add to Home Screen\".",
+      iosStep2: 'Choose "Add to Home Screen".',
       iosStep3: "Tap Add, then open TezTok from your home screen.",
     },
     options: {
@@ -400,11 +460,11 @@ const translations = {
       aboutSummary:
         "See the app version and a quick overview of how the app works.",
       aboutBody:
-        "TezTok is a mobile-first reading experience that makes it easier to explore theses and academic articles in a vertical feed. Right now, 3 sources are live: YOKTez, OpenAlex, and Crossref. Semantic Scholar and CORE are coming soon.",
+        "TezTok is a mobile-first reading experience that makes it easier to explore academic works in a vertical feed.",
       aboutVersion: "Version {version}",
       aboutSourceLabel: "Sources",
       aboutSourceValue:
-        "3 live sources: YOKTez, OpenAlex, and Crossref. Semantic Scholar and CORE are coming soon.",
+        "4 live sources: YOKTez, OpenAlex, Crossref, and PubMed.",
       aboutExperienceLabel: "Experience",
       aboutExperienceValue: "TikTok-style feed, search, and likes",
       aboutInstallLabel: "Availability",

@@ -79,7 +79,7 @@ define(['./workbox-93b8ab3d'], (function (workbox) { 'use strict';
    */
   workbox.precacheAndRoute([{
     "url": "/index.html",
-    "revision": "0.8jvp61uh6os"
+    "revision": "0.pqb7qi28pio"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
@@ -122,7 +122,7 @@ define(['./workbox-93b8ab3d'], (function (workbox) { 'use strict';
   workbox.registerRoute(({
     url,
     request
-  }) => request.method === "GET" && apiCachePattern.test(url.href), new workbox.NetworkFirst({
+  }) => request.method === "GET" && ["api.openalex.org", "api.crossref.org", "api.semanticscholar.org", "api.core.ac.uk", "eutils.ncbi.nlm.nih.gov"].includes(url.hostname), new workbox.NetworkFirst({
     "cacheName": "remote-feeds",
     "networkTimeoutSeconds": 3,
     plugins: [new workbox.CacheableResponsePlugin({

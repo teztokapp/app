@@ -2,9 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
-const apiCachePattern =
-  /^https:\/\/(api\.openalex\.org|api\.crossref\.org|api\.semanticscholar\.org|api\.core\.ac\.uk)\//;
-
 export default defineConfig({
   plugins: [
     react(),
@@ -130,7 +127,14 @@ export default defineConfig({
           },
           {
             urlPattern: ({ url, request }) =>
-              request.method === "GET" && apiCachePattern.test(url.href),
+              request.method === "GET" &&
+              [
+                "api.openalex.org",
+                "api.crossref.org",
+                "api.semanticscholar.org",
+                "api.core.ac.uk",
+                "eutils.ncbi.nlm.nih.gov",
+              ].includes(url.hostname),
             handler: "NetworkFirst",
             options: {
               cacheName: "remote-feeds",
