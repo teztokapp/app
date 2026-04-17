@@ -23,6 +23,7 @@ import { createTranslator, DEFAULT_LOCALE, LOCALE_OPTIONS } from "./i18n.js";
 import packageMeta from "../package.json";
 
 const APP_VERSION = packageMeta.version;
+const MODAL_CLOSE_DURATION_MS = 220;
 const THEME_META_COLORS = {
   light: "#e7e3dc",
   dark: "#000000",
@@ -131,6 +132,33 @@ const previewAbstract = (text, expanded) => {
 
   return `${text.slice(0, 140).trim()}...`;
 };
+
+function useModalPresence(open) {
+  const [isRendered, setIsRendered] = useState(open);
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setIsRendered(true);
+      setIsClosing(false);
+      return undefined;
+    }
+
+    if (!isRendered) {
+      return undefined;
+    }
+
+    setIsClosing(true);
+    const timeoutId = window.setTimeout(() => {
+      setIsRendered(false);
+      setIsClosing(false);
+    }, MODAL_CLOSE_DURATION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [open, isRendered]);
+
+  return { isRendered, isClosing };
+}
 
 const dedupeThesesById = (items) => {
   const seen = new Set();
@@ -598,12 +626,18 @@ function SettingsSelectRow({
 }
 
 function AboutSheet({ open, onClose, t }) {
-  if (!open) {
+  const { isRendered, isClosing } = useModalPresence(open);
+
+  if (!isRendered) {
     return null;
   }
 
   return (
-    <div className="sheet-backdrop" onClick={onClose} aria-hidden="true">
+    <div
+      className={isClosing ? "sheet-backdrop modal-closing" : "sheet-backdrop"}
+      onClick={onClose}
+      aria-hidden="true"
+    >
       <section
         className="abstract-sheet about-sheet"
         onClick={(event) => event.stopPropagation()}
@@ -930,12 +964,18 @@ function WheelPickerSheet({
   onSelect,
   onSelectHaptic,
 }) {
-  if (!open) {
+  const { isRendered, isClosing } = useModalPresence(open);
+
+  if (!isRendered) {
     return null;
   }
 
   return (
-    <div className="sheet-backdrop" onClick={onClose} aria-hidden="true">
+    <div
+      className={isClosing ? "sheet-backdrop modal-closing" : "sheet-backdrop"}
+      onClick={onClose}
+      aria-hidden="true"
+    >
       <section
         className="wheel-sheet"
         onClick={(event) => event.stopPropagation()}
@@ -1000,6 +1040,7 @@ function FeedFilterSheet({
   onSelectHaptic,
 }) {
   const [query, setQuery] = useState("");
+  const { isRendered, isClosing } = useModalPresence(open);
 
   useEffect(() => {
     if (!open) {
@@ -1007,7 +1048,7 @@ function FeedFilterSheet({
     }
   }, [open]);
 
-  if (!open) {
+  if (!isRendered) {
     return null;
   }
 
@@ -1021,7 +1062,11 @@ function FeedFilterSheet({
   });
 
   return (
-    <div className="sheet-backdrop picker-backdrop" onClick={onClose} aria-hidden="true">
+    <div
+      className={isClosing ? "sheet-backdrop picker-backdrop modal-closing" : "sheet-backdrop picker-backdrop"}
+      onClick={onClose}
+      aria-hidden="true"
+    >
       <section
         className="discipline-picker filter-sheet"
         onClick={(event) => event.stopPropagation()}
@@ -1112,6 +1157,7 @@ function DisciplinePickerModal({
 }) {
   const [query, setQuery] = useState("");
   const [activeLetter, setActiveLetter] = useState("");
+  const { isRendered, isClosing } = useModalPresence(open);
 
   useEffect(() => {
     if (!open) {
@@ -1120,7 +1166,7 @@ function DisciplinePickerModal({
     }
   }, [open]);
 
-  if (!open) {
+  if (!isRendered) {
     return null;
   }
 
@@ -1146,7 +1192,11 @@ function DisciplinePickerModal({
   });
 
   return (
-    <div className="sheet-backdrop picker-backdrop" onClick={onClose} aria-hidden="true">
+    <div
+      className={isClosing ? "sheet-backdrop picker-backdrop modal-closing" : "sheet-backdrop picker-backdrop"}
+      onClick={onClose}
+      aria-hidden="true"
+    >
       <section
         className="discipline-picker"
         onClick={(event) => event.stopPropagation()}
@@ -1216,12 +1266,18 @@ function DisciplinePickerModal({
 }
 
 function AbstractSheet({ thesis, open, onClose, t }) {
-  if (!open) {
+  const { isRendered, isClosing } = useModalPresence(open);
+
+  if (!isRendered) {
     return null;
   }
 
   return (
-    <div className="sheet-backdrop" onClick={onClose} aria-hidden="true">
+    <div
+      className={isClosing ? "sheet-backdrop modal-closing" : "sheet-backdrop"}
+      onClick={onClose}
+      aria-hidden="true"
+    >
       <section
         className="abstract-sheet"
         onClick={(event) => event.stopPropagation()}
