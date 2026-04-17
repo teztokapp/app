@@ -1126,6 +1126,23 @@ select {
     font-weight: 500;
 }
 
+.settings-select-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    min-width: 0;
+}
+
+.settings-select-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15rem;
+    height: 1.15rem;
+    color: color-mix(in srgb, var(--paper) 82%, transparent);
+    flex: 0 0 auto;
+}
+
 .settings-select-inline {
     padding: 0;
 }

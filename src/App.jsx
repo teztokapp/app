@@ -125,6 +125,103 @@ function FilterIcon() {
   );
 }
 
+function SparklesIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="action-icon">
+      <path
+        d="m12 3 1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4L12 3Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m18.5 14 0.9 2.1 2.1 0.9-2.1 0.9-0.9 2.1-0.9-2.1-2.1-0.9 2.1-0.9 0.9-2.1Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m5.5 15 0.7 1.6 1.6 0.7-1.6 0.7-0.7 1.6-0.7-1.6-1.6-0.7 1.6-0.7 0.7-1.6Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function LayersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="action-icon">
+      <path
+        d="m12 4 8 4-8 4-8-4 8-4Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m4 12 8 4 8-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m4 16 8 4 8-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SlidersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="action-icon">
+      <path
+        d="M4 7h16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 17h16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <circle cx="9" cy="7" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="15" cy="17" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="action-icon">
+      <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M12 10v5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <circle cx="12" cy="7" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 const previewAbstract = (text, expanded) => {
   if (expanded || text.length < 140) {
     return text;
@@ -589,6 +686,7 @@ function SettingsSelectRow({
   helper,
   onOpen,
   indicator,
+  leadingIcon,
   valueAsBadge = false,
 }) {
   const hasValue = Boolean(value);
@@ -616,7 +714,10 @@ function SettingsSelectRow({
           className="settings-select settings-select-inline"
           onClick={onOpen}
         >
-          <span>{label}</span>
+          <span className="settings-select-label">
+            {leadingIcon ? <span className="settings-select-icon" aria-hidden="true">{leadingIcon}</span> : null}
+            <span>{label}</span>
+          </span>
           <ChevronIcon />
         </button>
       )}
@@ -829,9 +930,9 @@ function SettingsScreen({
     yearOptions.find((option) => option.id === year)?.label ?? year;
   const showNativeHaptics = isNativePlatform();
   const settingsSections = [
-    { id: "general", label: t("settings.sections.general") },
-    { id: "appearance", label: t("settings.sections.appearance") },
-    { id: "sources", label: t("settings.sections.sources") },
+    { id: "general", label: t("settings.sections.general"), icon: <SlidersIcon /> },
+    { id: "appearance", label: t("settings.sections.appearance"), icon: <SparklesIcon /> },
+    { id: "sources", label: t("settings.sections.sources"), icon: <LayersIcon /> },
   ];
 
   return (
@@ -938,12 +1039,14 @@ function SettingsScreen({
                   key={section.id}
                   label={section.label}
                   value=""
+                  leadingIcon={section.icon}
                   onOpen={() => onSetActiveSection(section.id)}
                 />
               ))}
               <SettingsSelectRow
                 label={t("settings.aboutTitle")}
                 value=""
+                leadingIcon={<InfoIcon />}
                 onOpen={onOpenAbout}
               />
             </SettingsSection>
