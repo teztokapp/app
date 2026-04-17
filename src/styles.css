@@ -55,6 +55,93 @@ html[data-theme="dark"] {
     --tab-fade-bottom: rgba(0, 0, 0, 0.96);
 }
 
+html[data-theme="dracula"] {
+    --bg: #191a21;
+    --paper: #f8f8f2;
+    --text: #f8f8f2;
+    --muted: rgba(248, 248, 242, 0.68);
+    --accent: #ff79c6;
+    --accent-soft: rgba(255, 121, 198, 0.18);
+    --glass: rgba(255, 255, 255, 0.08);
+    --glass-strong: rgba(41, 42, 54, 0.82);
+    --screen-bg: #1f2029;
+    --screen-border: rgba(248, 248, 242, 0.08);
+    --chip-bg: rgba(248, 248, 242, 0.08);
+    --chip-border: rgba(248, 248, 242, 0.12);
+    --overlay-top: rgba(26, 27, 34, 0.08);
+    --overlay-bottom: rgba(26, 27, 34, 0.76);
+    --shadow-strong: rgba(0, 0, 0, 0.48);
+    --image-overlay-top: rgba(20, 21, 27, 0.18);
+    --image-overlay-bottom: rgba(20, 21, 27, 0.82);
+    --header-ink: #f8f8f2;
+    --header-fade-top: rgba(25, 26, 33, 0.9);
+    --header-fade-bottom: rgba(25, 26, 33, 0);
+    --surface-border: rgba(248, 248, 242, 0.08);
+    --surface-bg-soft: rgba(248, 248, 242, 0.05);
+    --surface-bg-strong: rgba(41, 42, 54, 0.95);
+    --tab-fade-top: rgba(25, 26, 33, 0);
+    --tab-fade-mid: rgba(25, 26, 33, 0.76);
+    --tab-fade-bottom: rgba(25, 26, 33, 0.97);
+}
+
+html[data-theme="forest"] {
+    --bg: #102217;
+    --paper: #eef6ee;
+    --text: #eef6ee;
+    --muted: rgba(238, 246, 238, 0.68);
+    --accent: #7ce38b;
+    --accent-soft: rgba(124, 227, 139, 0.18);
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-strong: rgba(18, 42, 28, 0.84);
+    --screen-bg: #132c1d;
+    --screen-border: rgba(238, 246, 238, 0.08);
+    --chip-bg: rgba(238, 246, 238, 0.08);
+    --chip-border: rgba(238, 246, 238, 0.12);
+    --overlay-top: rgba(12, 24, 17, 0.08);
+    --overlay-bottom: rgba(12, 24, 17, 0.74);
+    --shadow-strong: rgba(0, 0, 0, 0.44);
+    --image-overlay-top: rgba(9, 20, 14, 0.16);
+    --image-overlay-bottom: rgba(9, 20, 14, 0.82);
+    --header-ink: #eef6ee;
+    --header-fade-top: rgba(16, 34, 23, 0.9);
+    --header-fade-bottom: rgba(16, 34, 23, 0);
+    --surface-border: rgba(238, 246, 238, 0.08);
+    --surface-bg-soft: rgba(238, 246, 238, 0.05);
+    --surface-bg-strong: rgba(18, 42, 28, 0.95);
+    --tab-fade-top: rgba(16, 34, 23, 0);
+    --tab-fade-mid: rgba(16, 34, 23, 0.76);
+    --tab-fade-bottom: rgba(16, 34, 23, 0.97);
+}
+
+html[data-theme="solarized"] {
+    --bg: #fdf6e3;
+    --paper: #24313a;
+    --text: #24313a;
+    --muted: rgba(36, 49, 58, 0.62);
+    --accent: #cb4b16;
+    --accent-soft: rgba(203, 75, 22, 0.14);
+    --glass: rgba(255, 252, 240, 0.72);
+    --glass-strong: rgba(247, 239, 215, 0.88);
+    --screen-bg: #f6edd4;
+    --screen-border: rgba(36, 49, 58, 0.1);
+    --chip-bg: rgba(36, 49, 58, 0.07);
+    --chip-border: rgba(36, 49, 58, 0.1);
+    --overlay-top: rgba(255, 252, 245, 0.16);
+    --overlay-bottom: rgba(255, 249, 234, 0.8);
+    --shadow-strong: rgba(255, 255, 255, 0.18);
+    --image-overlay-top: rgba(255, 249, 235, 0.12);
+    --image-overlay-bottom: rgba(255, 245, 225, 0.8);
+    --header-ink: #24313a;
+    --header-fade-top: rgba(253, 246, 227, 0.95);
+    --header-fade-bottom: rgba(253, 246, 227, 0);
+    --surface-border: rgba(36, 49, 58, 0.1);
+    --surface-bg-soft: rgba(36, 49, 58, 0.04);
+    --surface-bg-strong: rgba(247, 239, 215, 0.94);
+    --tab-fade-top: rgba(253, 246, 227, 0);
+    --tab-fade-mid: rgba(253, 246, 227, 0.84);
+    --tab-fade-bottom: rgba(253, 246, 227, 0.98);
+}
+
 * {
     box-sizing: border-box;
 }
@@ -68,6 +155,11 @@ html {
 }
 
 html[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+html[data-theme="dracula"],
+html[data-theme="forest"] {
     color-scheme: dark;
 }
 

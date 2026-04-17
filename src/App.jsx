@@ -23,6 +23,13 @@ import { createTranslator, DEFAULT_LOCALE, LOCALE_OPTIONS } from "./i18n.js";
 import packageMeta from "../package.json";
 
 const APP_VERSION = packageMeta.version;
+const THEME_META_COLORS = {
+  light: "#e7e3dc",
+  dark: "#000000",
+  dracula: "#191a21",
+  forest: "#102217",
+  solarized: "#fdf6e3",
+};
 
 function HeartIcon({ filled }) {
   return (
@@ -1579,6 +1586,10 @@ export default function App() {
   useEffect(() => {
     writePreferenceValue("teztok-theme", theme);
     document.documentElement.dataset.theme = theme;
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute("content", THEME_META_COLORS[theme] ?? THEME_META_COLORS.dark);
+    }
   }, [theme]);
 
   useEffect(() => {
@@ -1680,6 +1691,9 @@ export default function App() {
   const themeOptions = [
     { id: "light", label: t("options.theme.light") },
     { id: "dark", label: t("options.theme.dark") },
+    { id: "dracula", label: t("options.theme.dracula") },
+    { id: "forest", label: t("options.theme.forest") },
+    { id: "solarized", label: t("options.theme.solarized") },
   ];
   const feedModeOptions = [
     { id: "random", label: t("options.feedOrder.random") },

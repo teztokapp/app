@@ -96,6 +96,9 @@ const translations = {
       theme: {
         light: "Açık",
         dark: "Koyu",
+        dracula: "Dracula",
+        forest: "Orman",
+        solarized: "Solarized",
       },
       feedOrder: {
         random: "Rastgele",
@@ -346,6 +349,9 @@ const translations = {
       theme: {
         light: "Light",
         dark: "Dark",
+        dracula: "Dracula",
+        forest: "Forest",
+        solarized: "Solarized",
       },
       feedOrder: {
         random: "Random",
