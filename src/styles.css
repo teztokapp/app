@@ -27,6 +27,8 @@
     --settings-card-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
     --settings-divider: rgba(60, 60, 67, 0.16);
     --settings-icon-fg: #ffffff;
+    --app-shell-topbar:
+        linear-gradient(180deg, rgba(243, 247, 246, 1) 0%, rgba(243, 247, 246, 0.98) 16%, rgba(243, 247, 246, 0.9) 28%, rgba(243, 247, 246, 0.72) 42%, rgba(243, 247, 246, 0) 62%);
     --tab-fade-top: rgba(243, 247, 246, 0);
     --tab-fade-mid: rgba(243, 247, 246, 0.82);
     --tab-fade-bottom: rgba(243, 247, 246, 0.98);
@@ -60,6 +62,8 @@ html[data-theme="dark"] {
     --settings-card-border: rgba(255, 255, 255, 0.06);
     --settings-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
     --settings-divider: rgba(255, 255, 255, 0.09);
+    --app-shell-topbar:
+        linear-gradient(180deg, rgba(11, 16, 32, 1) 0%, rgba(11, 16, 32, 0.98) 16%, rgba(11, 16, 32, 0.92) 28%, rgba(11, 16, 32, 0.74) 42%, rgba(11, 16, 32, 0) 62%);
     --tab-fade-top: rgba(11, 16, 32, 0);
     --tab-fade-mid: rgba(11, 16, 32, 0.72);
     --tab-fade-bottom: rgba(11, 16, 32, 0.96);
@@ -94,6 +98,8 @@ html[data-theme="dracula"] {
     --settings-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
     --settings-divider: rgba(252, 252, 247, 0.14);
     --settings-icon-fg: #2a2139;
+    --app-shell-topbar:
+        linear-gradient(180deg, rgba(25, 26, 33, 1) 0%, rgba(25, 26, 33, 0.98) 16%, rgba(25, 26, 33, 0.92) 28%, rgba(25, 26, 33, 0.74) 42%, rgba(25, 26, 33, 0) 62%);
     --tab-fade-top: rgba(25, 26, 33, 0);
     --tab-fade-mid: rgba(25, 26, 33, 0.76);
     --tab-fade-bottom: rgba(25, 26, 33, 0.97);
@@ -128,6 +134,8 @@ html[data-theme="forest"] {
     --settings-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
     --settings-divider: rgba(245, 251, 245, 0.14);
     --settings-icon-fg: #163122;
+    --app-shell-topbar:
+        linear-gradient(180deg, rgba(16, 34, 23, 1) 0%, rgba(16, 34, 23, 0.98) 16%, rgba(16, 34, 23, 0.92) 28%, rgba(16, 34, 23, 0.74) 42%, rgba(16, 34, 23, 0) 62%);
     --tab-fade-top: rgba(16, 34, 23, 0);
     --tab-fade-mid: rgba(16, 34, 23, 0.76);
     --tab-fade-bottom: rgba(16, 34, 23, 0.97);
@@ -161,6 +169,8 @@ html[data-theme="solarized"] {
     --settings-card-border: rgba(36, 49, 58, 0.08);
     --settings-card-shadow: 0 10px 24px rgba(80, 72, 50, 0.08);
     --settings-divider: rgba(36, 49, 58, 0.12);
+    --app-shell-topbar:
+        linear-gradient(180deg, rgba(253, 246, 227, 1) 0%, rgba(253, 246, 227, 0.98) 16%, rgba(253, 246, 227, 0.9) 28%, rgba(253, 246, 227, 0.72) 42%, rgba(253, 246, 227, 0) 62%);
     --tab-fade-top: rgba(253, 246, 227, 0);
     --tab-fade-mid: rgba(253, 246, 227, 0.84);
     --tab-fade-bottom: rgba(253, 246, 227, 0.98);
@@ -216,6 +226,17 @@ select {
     position: relative;
     height: 100svh;
     overflow: hidden;
+    background: var(--bg);
+}
+
+.app-shell::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: max(7.5rem, calc(3.5rem + env(safe-area-inset-top)));
+    pointer-events: none;
+    z-index: 5;
+    background: var(--app-shell-topbar);
 }
 
 .floating-header {
@@ -263,7 +284,7 @@ select {
 
 .header-brand-logo {
     display: block;
-    width: min(6.4rem, 100%);
+    width: min(5.4rem, 100%);
     height: auto;
     margin: 0;
 }
@@ -2563,7 +2584,7 @@ select {
 
 .about-sheet-logo {
     display: block;
-    width: min(9.5rem, 100%);
+    width: min(7.5rem, 100%);
     height: auto;
 }
 
