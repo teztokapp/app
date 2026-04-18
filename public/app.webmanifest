@@ -58,6 +58,34 @@
       "sizes": "750x1334",
       "type": "image/png",
       "label": "TezTok settings preview"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop-1.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "label": "TezTok desktop feed preview",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop-2.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "label": "TezTok desktop search preview",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop-3.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "label": "TezTok desktop thesis detail preview",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/screenshot-desktop-4.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "label": "TezTok desktop settings preview",
+      "form_factor": "wide"
     }
   ]
 }

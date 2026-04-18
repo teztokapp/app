@@ -25,7 +25,7 @@ import packageMeta from "../package.json";
 const APP_VERSION = packageMeta.version;
 const MODAL_CLOSE_DURATION_MS = 220;
 const THEME_META_COLORS = {
-  light: "#e7e3dc",
+  light: "#f3f7f6",
   dark: "#000000",
   dracula: "#191a21",
   forest: "#102217",
@@ -733,6 +733,15 @@ function ChevronIcon() {
   );
 }
 
+function BrandLogo({ theme, className = "brand-logo", alt = "TezTok" }) {
+  const src =
+    theme === "light" || theme === "solarized"
+      ? "/logo-black.png"
+      : "/logo-white.png";
+
+  return <img className={className} src={src} alt={alt} />;
+}
+
 function SettingsGlyph({ tone = "neutral", children }) {
   return (
     <span className={`settings-select-icon settings-select-icon-${tone}`} aria-hidden="true">
@@ -794,7 +803,7 @@ function SettingsSelectRow({
   );
 }
 
-function AboutSheet({ open, onClose, t }) {
+function AboutSheet({ open, onClose, t, theme }) {
   const { isRendered, isClosing } = useModalPresence(open);
 
   if (!isRendered) {
@@ -824,7 +833,7 @@ function AboutSheet({ open, onClose, t }) {
         <div className="about-sheet-intro">
           <img className="about-sheet-icon" src="/icon.png" alt="" aria-hidden="true" />
           <div>
-            <h3>{t("settings.aboutAppName")}</h3>
+            <BrandLogo theme={theme} className="about-sheet-logo" alt={t("settings.aboutAppName")} />
             <p className="about-sheet-version">
               {t("settings.aboutVersion", { version: APP_VERSION })}
             </p>
@@ -872,13 +881,12 @@ function InstallSettingsRow({ t, installPlatform, onInstallApp }) {
   return (
     <SettingsSelectRow
       label={t("install.title")}
-      value={value}
+      value=""
       helper={helper}
       onOpen={onInstallApp}
       indicator=" "
       leadingIcon={<ShareIcon />}
       leadingTone="blue"
-      valueAsBadge
     />
   );
 }
@@ -2140,6 +2148,7 @@ export default function App() {
         : null;
   const headerClassName = activeTab === "feed" ? "header-leading header-leading-feed" : "header-leading";
   const headerTitleClassName = activeTab === "feed" ? "header-title header-title-feed" : "header-title";
+  const showBrandLogoInHeader = activeTab === "feed";
   const themeOptions = [
     { id: "light", label: t("options.theme.light") },
     { id: "dark", label: t("options.theme.dark") },
@@ -3094,7 +3103,11 @@ export default function App() {
             </button>
           ) : null}
           <div className={headerTitleClassName}>
-            <h2>{headerTitle}</h2>
+            {showBrandLogoInHeader ? (
+              <BrandLogo theme={theme} className="header-brand-logo" alt={t("app.title")} />
+            ) : (
+              <h2>{headerTitle}</h2>
+            )}
           </div>
         </div>
         {activeTab === "feed" ? (
@@ -3390,6 +3403,7 @@ export default function App() {
       />
       <AboutSheet
         t={t}
+        theme={theme}
         open={aboutOpen}
         onClose={() => setAboutOpen(false)}
       />
