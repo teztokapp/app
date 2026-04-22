@@ -2,8 +2,7 @@
 
 <img src="./public/logo-black.png" alt="TezTok Logo" width="120" />
 
-# TezTok
-### *reels yerine tez kaydır.*
+### *scroll reels instead of theses.*
 
 **Mobile-first academic thesis browsing with a TikTok-style vertical feed.**
 
