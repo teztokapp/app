@@ -13,9 +13,6 @@
 [![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
 
 ---
-
-<img src="./public/screenshots/screenshot-mobile-1.png" alt="TezTok Main Feed" width="600" />
-
 </div>
 
 ## 🚀 Overview
