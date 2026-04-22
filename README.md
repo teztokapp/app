@@ -1,86 +1,136 @@
+<div align="center">
+
+<img src="./public/logo-black.png" alt="TezTok Logo" width="120" />
+
 # TezTok
+### *reels yerine tez kaydır.*
 
-Mobile-first academic thesis browsing with a TikTok-style vertical feed. The project combines a React frontend and a dedicated YOKTez API, while background images are fetched directly in the client from Wikimedia Commons with an optional Unsplash fallback.
+**Mobile-first academic thesis browsing with a TikTok-style vertical feed.**
 
-## Architecture
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-119EFF?style=for-the-badge&logo=capacitor&logoColor=white)](https://capacitorjs.com/)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
 
-```text
-+---------------------------+       +---------------------------+
-| React / Vite frontend     |       | Optional OpenAI summary   |
-|                           |       | generation                |
-| - snap-scrolling feed     |       +-------------+-------------+
-| - search + bookmarks      |                     |
-| - abstract expansion      |                     |
-+-------------+-------------+                     |
-              | /api                               |
-              v                                    |
-+-------------+-------------+                      |
-| YOKTez API gateway        |<---------------------+
-|                           |
-| - /feed                   |
-| - /random-thesis          |
-| - /search                 |
-| - /thesis/:id             |
-| - /thesis/:id/summary     |
-+-------------+-------------+
-              |
-              v
-+-------------+-------------+
-| YOKTez adapter layer      |
-|                           |
-| - cache in memory / Redis |
-| - maps scraper output     |
-| - calls Playwright server |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-| YOKTez website via        |
-| Playwright scraper / MCP  |
-+---------------------------+
+---
 
+<img src="./public/screenshots/screenshot-mobile-1.png" alt="TezTok Main Feed" width="600" />
+
+</div>
+
+## 🚀 Overview
+
+TezTok transforms the often mundane task of browsing academic theses into an engaging, immersive experience. Combining a TikTok-style vertical feed with powerful scraping and AI summary capabilities, it brings academic research to your fingertips.
+
+---
+
+<div align="center">
+  <h2>✨ Smart Summaries</h2>
+  <p><i>abstract'ları hızlıca oku.</i></p>
+  <img src="./public/screenshots/screenshot-desktop-4.png" width="85%" />
+</div>
+
+- 📱 **Vertical Swipe Feed**: Browse theses with fluid, snap-scrolling interactions.
+- 🤖 **AI Summaries**: Instantly generate concise summaries of complex abstracts using OpenAI.
+- 🔍 **Multi-Source Search**: Comprehensive search across OpenAlex, Crossref, PubMed, and YOKTez.
+- 📑 **Smart Bookmarks**: Save interesting research locally for offline reading.
+- 🎨 **Dynamic Backgrounds**: Beautiful, context-aware imagery from Wikimedia and Unsplash.
+
+---
+
+<div align="center">
+  <h2>🔍 Powerful Search</h2>
+  <p><i>detaylı, ama kolay tez arama.</i></p>
+  <img src="./public/screenshots/screenshot-desktop-2.png" width="85%" />
+</div>
+
+---
+
+<div align="center">
+  <h2>📸 App Gallery</h2>
+  <br />
+  <table border="0">
+    <tr>
+      <td><img src="./public/screenshots/screenshot-mobile-2.png" width="250" /></td>
+      <td><img src="./public/screenshots/screenshot-mobile-3.png" width="250" /></td>
+      <td><img src="./public/screenshots/screenshot-mobile-4.png" width="250" /></td>
+    </tr>
+  </table>
+  <br />
+  <img src="./public/screenshots/screenshot-desktop-1.png" width="85%" style="border-radius: 10px;" />
+  <p><i>Desktop view optimized for widescreen research sessions.</i></p>
+</div>
+
+---
+
+<div align="center">
+  <h2>🏗️ Architecture</h2>
+</div>
+
+```mermaid
+graph TD
+    A[React / Vite Frontend] --> B[YOKTez API Gateway]
+    B --> C[YOKTez Adapter Layer]
+    C --> D[YOKTez/Playwright Scraper]
+    B --> E[OpenAI Summary Gen]
+    A --> F[Wikimedia / Unsplash Imagery]
 ```
 
-## Features
+---
 
-- Vertical swipe-style thesis feed
-- Multi-source support including OpenAlex, Crossref, PubMed, and YOKTez
-- Discipline/topic filtering
-- Local likes/bookmarks
-- PWA install and offline caching
+<div align="center">
+  <h2>🛠️ Setup & Development</h2>
+</div>
 
-## API design
+### Prerequisites
+- Node.js (>= 20.x)
+- npm or yarn
 
-- `GET /api/random-thesis`
-- `GET /api/feed?cursor=0&limit=4`
-- `GET /api/search?q=kuraklik`
-- `GET /api/thesis/:id`
-- `POST /api/thesis/:id/summary`
-
-## Run locally
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/yoktez-tiktok.git
+
+# Install dependencies
 npm install
+
+# Run in development mode (Simultaneous Client & Server)
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173`.
+### Environment Configuration
 
-Local development uses `http://localhost:3001` for YOKTez feed, search, thesis detail, and summary APIs.
+Create a `.env` file in the root directory:
 
-## Standalone deploy
-
-The frontend can talk to separately hosted services with:
-
-```bash
-VITE_YOKTEZ_API_BASE_URL=https://your-yoktez-api.example.com
-VITE_UNSPLASH_ACCESS_KEY=your_unsplash_access_key
+```env
+VITE_YOKTEZ_API_BASE_URL=http://localhost:3001
+OPENAI_API_KEY=your_openai_key
+VITE_UNSPLASH_ACCESS_KEY=your_unsplash_key
 ```
 
-Without `VITE_YOKTEZ_API_BASE_URL`, local development uses the Vite `/api` proxy. `VITE_UNSPLASH_ACCESS_KEY` is optional and only enables the client-side Unsplash fallback.
+---
 
-## Notes
+<div align="center">
+  <h2>🚢 Deployment</h2>
+</div>
 
-- YOKTez scraping should stay on a hosted backend or worker.
-- AI summaries fall back to a local heuristic when `OPENAI_API_KEY` is missing.
-- Previously opened content can still load from cache in the PWA.
+### Frontend (Vercel)
+The client is ready for Vercel deployment with included `vercel.json` configurations.
+
+### Mobile (Capacitor)
+```bash
+# Sync with native platforms
+npm run cap:sync
+
+# Open in IDE
+npm run cap:open:ios
+npm run cap:open:android
+```
+
+---
+
+<div align="center">
+  <p>Developed with ❤️ for the academic community.</p>
+</div>
