@@ -2,9 +2,9 @@
 
 <img src="./public/logo-black.png" alt="TezTok Logo" width="120" />
 
-### *scroll reels instead of theses.*
+### *scroll theses instead of reels.*
 
-**Mobile-first academic thesis browsing with a TikTok-style vertical feed.**
+**Mobile-first academic thesis browsing with a social media style vertical feed.**
 
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -24,29 +24,7 @@ TezTok transforms the often mundane task of browsing academic theses into an eng
 
 ---
 
-<div align="center">
-  <h2>✨ Smart Summaries</h2>
-  <p><i>abstract'ları hızlıca oku.</i></p>
-  <img src="./public/screenshots/screenshot-desktop-4.png" width="85%" />
-</div>
-
-- 📱 **Vertical Swipe Feed**: Browse theses with fluid, snap-scrolling interactions.
-- 🤖 **AI Summaries**: Instantly generate concise summaries of complex abstracts using OpenAI.
-- 🔍 **Multi-Source Search**: Comprehensive search across OpenAlex, Crossref, PubMed, and YOKTez.
-- 📑 **Smart Bookmarks**: Save interesting research locally for offline reading.
-- 🎨 **Dynamic Backgrounds**: Beautiful, context-aware imagery from Wikimedia and Unsplash.
-
----
-
-<div align="center">
-  <h2>🔍 Powerful Search</h2>
-  <p><i>detaylı, ama kolay tez arama.</i></p>
-  <img src="./public/screenshots/screenshot-desktop-2.png" width="85%" />
-</div>
-
----
-
-<div align="center">
+<div>
   <h2>📸 App Gallery</h2>
   <br />
   <table border="0">
@@ -63,7 +41,7 @@ TezTok transforms the often mundane task of browsing academic theses into an eng
 
 ---
 
-<div align="center">
+<div>
   <h2>🏗️ Architecture</h2>
 </div>
 
@@ -111,7 +89,7 @@ VITE_UNSPLASH_ACCESS_KEY=your_unsplash_key
 
 ---
 
-<div align="center">
+<div>
   <h2>🚢 Deployment</h2>
 </div>
 
