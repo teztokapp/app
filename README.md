@@ -17,7 +17,7 @@
 
 ## 🚀 Overview
 
-TezTok transforms the often mundane task of browsing academic theses into an engaging, immersive experience. Combining a TikTok-style vertical feed with powerful scraping and AI summary capabilities, it brings academic research to your fingertips.
+TezTok transforms the often mundane task of browsing academic theses into an engaging, immersive experience. Combining a social media styled vertical feed with powerful scraping for academic research to your fingertips.
 
 ---
 
