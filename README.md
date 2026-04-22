@@ -53,7 +53,7 @@ graph TD
 
 ---
 
-<div align="center">
+<div>
   <h2>🛠️ Setup & Development</h2>
 </div>
 
