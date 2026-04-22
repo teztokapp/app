@@ -47,7 +47,6 @@ graph TD
     A[React / Vite Frontend] --> B[YOKTez API Gateway]
     B --> C[YOKTez Adapter Layer]
     C --> D[YOKTez/Playwright Scraper]
-    B --> E[OpenAI Summary Gen]
     A --> F[Wikimedia / Unsplash Imagery]
 ```
 
